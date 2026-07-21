@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DRE - Visão Vertical por Canal e Mês</title>
+    <title>DRE por Canal - Visão Individualizada</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
@@ -15,15 +15,15 @@
         <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center space-x-3">
                 <div class="bg-emerald-600 p-2.5 rounded-lg text-white">
-                    <i class="fa-solid fa-chart-line text-xl"></i>
+                    <i class="fa-solid fa-chart-pie text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight">DRE por Canal - Visão Vertical</h1>
-                    <p class="text-xs text-slate-400">E-commerce - Despesas por Canal de Venda</p>
+                    <h1 class="text-xl font-bold tracking-tight">DRE Individualizada por Canal</h1>
+                    <p class="text-xs text-slate-400">Selecione o canal para visualizar a DRE mês a mês, A.V. e Acumulado</p>
                 </div>
             </div>
             <div>
-                <button onclick="toggleAdminModal()" id="btn-admin" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm flex items-center space-x-2">
+                <button onclick="toggleAdminModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm flex items-center space-x-2">
                     <i class="fa-solid fa-plus-circle"></i>
                     <span>Novo Lançamento</span>
                 </button>
@@ -33,18 +33,30 @@
 
     <!-- Conteúdo Principal -->
     <main class="max-w-7xl mx-auto px-4 py-8 space-y-6">
-        <!-- Tabela DRE Vertical por Canal -->
+        <!-- Seletor de Canais (Botões) -->
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Selecione o Canal de Venda</h3>
+            <div id="canais-botoes" class="flex flex-wrap gap-2">
+                <!-- Gerado via JavaScript -->
+            </div>
+        </div>
+
+        <!-- Tabela DRE do Canal Selecionado -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
-                <h2 class="font-bold text-slate-800"><i class="fa-solid fa-table text-slate-500 mr-2"></i> Canais e Despesas (Valores e A.V. %)</h2>
-                <div class="text-xs text-slate-500">Base A.V.: Receita Total do Mês (100%)</div>
+            <div class="px-6 py-4 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-50/50 gap-2">
+                <div>
+                    <h2 id="titulo-dre-canal" class="font-bold text-slate-800 text-base">DRE - Canal</h2>
+                    <p class="text-xs text-slate-500">Visão Mensal, Análise Vertical (%) sobre a Receita do Canal e Acumulado</p>
+                </div>
+                <div class="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-semibold border border-emerald-200">
+                    Base A.V.: Receita Bruta do Canal (100%)
+                </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-xs">
                     <thead>
-                        <tr class="bg-slate-100/70 text-slate-700 font-semibold border-b border-slate-200">
-                            <th class="py-3 px-4 min-w-[240px]">Canal / Grupo da DRE</th>
-                            <!-- Meses gerados dinamicamente via JS -->
+                        <tr id="dre-thead-tr" class="bg-slate-100/70 text-slate-700 font-semibold border-b border-slate-200">
+                            <!-- Preenchido via JavaScript -->
                         </tr>
                     </thead>
                     <tbody id="dre-table-body" class="divide-y divide-slate-100 text-slate-700">
@@ -59,7 +71,7 @@
     <div id="admin-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden">
             <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
-                <h3 class="font-bold text-base"><i class="fa-solid fa-pen-to-square mr-2"></i> Novo Lançamento por Canal</h3>
+                <h3 class="font-bold text-base"><i class="fa-solid fa-pen-to-square mr-2"></i> Novo Lançamento na DRE</h3>
                 <button onclick="toggleAdminModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-6 space-y-4">
@@ -87,18 +99,29 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Selecione o Canal / Conta</label>
-                    <select id="lanc-conta" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Selecione o Canal</label>
+                    <select id="lanc-canal" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                         <!-- Preenchido dinamicamente -->
                     </select>
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Valor (R$)</label>
-                    <input type="number" id="lanc-valor" step="0.01" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="0.00">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Tipo de Lançamento</label>
+                        <select id="lanc-tipo" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <option value="receita">Receita (Vendas)</option>
+                            <option value="imposto">(-) Impostos sobre Vendas</option>
+                            <option value="cmv">(-) CMV / Custos Diretos</option>
+                            <option value="desp_operacional">(-) Despesas Operacionais</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Valor (R$)</label>
+                        <input type="number" id="lanc-valor" step="0.01" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="0.00">
+                    </div>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Descrição / Histórico</label>
-                    <input type="text" id="lanc-desc" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="Ex: Detalhe do lançamento...">
+                    <input type="text" id="lanc-desc" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="Ex: Vendas de Janeiro...">
                 </div>
                 <div class="pt-2 flex justify-end space-x-3">
                     <button onclick="toggleAdminModal()" class="px-4 py-2 border border-slate-300 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancelar</button>
@@ -120,7 +143,7 @@
             "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro"
         };
 
-        const canaisLista = [
+        const canais = [
             { id: "app", nome: "1) APP" },
             { id: "assinatura", nome: "2) ASSINATURA" },
             { id: "ifood", nome: "3) IFOOD" },
@@ -129,49 +152,16 @@
             { id: "site", nome: "6) SITE" }
         ];
 
-        // Mapeamento de contas de lançamento vinculadas a cada canal ou despesa geral
-        const estruturaContas = {
-            // APP
-            "rec_app": { nome: "Receita - APP", canal: "app", tipo: "receita" },
-            "desp_app": { nome: "Despesa / Custo - APP", canal: "app", tipo: "despesa" },
-            // ASSINATURA
-            "rec_assinatura": { nome: "Receita - Assinatura", canal: "assinatura", tipo: "receita" },
-            "desp_assinatura": { nome: "Despesa / Custo - Assinatura", canal: "assinatura", tipo: "despesa" },
-            // IFOOD
-            "rec_ifood": { nome: "Receita - iFood", canal: "ifood", tipo: "receita" },
-            "desp_ifood": { nome: "Taxas e Despesas - iFood", canal: "ifood", tipo: "despesa" },
-            // MERCADO LIVRE
-            "rec_mercadolivre": { nome: "Receita - Mercado Livre", canal: "mercadolivre", tipo: "receita" },
-            "desp_mercadolivre": { nome: "Comissões e Fretes - Mercado Livre", canal: "mercadolivre", tipo: "despesa" },
-            // RENOVACAO
-            "rec_renovacao": { nome: "Receita - Renovação", canal: "renovacao", tipo: "receita" },
-            "desp_renovacao": { nome: "Despesas - Renovação", canal: "renovacao", tipo: "despesa" },
-            // SITE
-            "rec_site": { nome: "Receita - Site", canal: "site", tipo: "receita" },
-            "desp_site": { nome: "Despesas / Marketing - Site", canal: "site", tipo: "despesa" },
-            // Gerais
-            "impostos_geral": { nome: "Impostos sobre Vendas (Geral)", canal: "geral", tipo: "despesa" },
-            "cmv_geral": { nome: "CMV Geral", canal: "geral", tipo: "despesa" },
-            "desp_adm": { nome: "Despesas Administrativas", canal: "geral", tipo: "despesa" }
-        };
+        let canalAtivo = "site"; // Canal selecionado por padrão
 
-        let lancamentos = JSON.parse(localStorage.getItem('dre_lancamentos_canais')) || [
-            { conta: "rec_site", valor: 500000.00, desc: "Vendas Site Jan", mes: "01", ano: "2026" },
-            { conta: "desp_site", valor: -50000.00, desc: "Marketing Site Jan", mes: "01", ano: "2026" },
-            { conta: "rec_ifood", valor: 300000.00, desc: "Vendas iFood Jan", mes: "01", ano: "2026" },
-            { conta: "desp_ifood", valor: -45000.00, desc: "Comissão iFood Jan", mes: "01", ano: "2026" }
+        let lancamentos = JSON.parse(localStorage.getItem('dre_canais_individual_lanc')) || [
+            { canal: "site", tipo: "receita", valor: 500000.00, desc: "Vendas Site Jan", mes: "01", ano: "2026" },
+            { canal: "site", tipo: "imposto", valor: 50000.00, desc: "Impostos Site Jan", mes: "01", ano: "2026" },
+            { canal: "site", tipo: "cmv", valor: 200000.00, desc: "CMV Site Jan", mes: "01", ano: "2026" },
+            { canal: "site", tipo: "desp_operacional", valor: 80000.00, desc: "Despesas Site Jan", mes: "01", ano: "2026" },
+            { canal: "site", tipo: "receita", valor: 600000.00, desc: "Vendas Site Fev", mes: "02", ano: "2026" },
+            { canal: "ifood", tipo: "receita", valor: 300000.00, desc: "Vendas iFood Jan", mes: "01", ano: "2026" }
         ];
-
-        function popularSelectContas() {
-            const select = document.getElementById('lanc-conta');
-            select.innerHTML = '';
-            Object.keys(estruturaContas).forEach(codigo => {
-                let opt = document.createElement('option');
-                opt.value = codigo;
-                opt.innerText = estruturaContas[codigo].nome;
-                select.appendChild(opt);
-            });
-        }
 
         function formatarMoeda(valor) {
             let absVal = Math.abs(valor);
@@ -183,6 +173,34 @@
             return valor.toFixed(2).replace('.', ',') + '%';
         }
 
+        function popularSelectCanais() {
+            const select = document.getElementById('lanc-canal');
+            select.innerHTML = '';
+            canais.forEach(c => {
+                let opt = document.createElement('option');
+                opt.value = c.id;
+                opt.innerText = c.nome;
+                select.appendChild(opt);
+            });
+        }
+
+        function renderizarBotoesCanais() {
+            const container = document.getElementById('canais-botoes');
+            container.innerHTML = '';
+            canais.forEach(c => {
+                let btn = document.createElement('button');
+                let isActive = c.id === canalAtivo;
+                btn.className = `px-4 py-2.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center space-x-2 ${isActive ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`;
+                btn.innerHTML = `<span>${c.nome}</span>`;
+                btn.onclick = () => {
+                    canalAtivo = c.id;
+                    renderizarBotoesCanais();
+                    calcularEAtualizarDRE();
+                };
+                container.appendChild(btn);
+            });
+        }
+
         function toggleAdminModal() {
             const modal = document.getElementById('admin-modal');
             modal.classList.toggle('hidden');
@@ -192,17 +210,18 @@
         function adicionarLancamento() {
             const mes = document.getElementById('lanc-mes').value;
             const ano = document.getElementById('lanc-ano').value;
-            const conta = document.getElementById('lanc-conta').value;
+            const canal = document.getElementById('lanc-canal').value;
+            const tipo = document.getElementById('lanc-tipo').value;
             let valor = parseFloat(document.getElementById('lanc-valor').value);
-            const desc = document.getElementById('lanc-desc').value || estruturaContas[conta].nome;
+            const desc = document.getElementById('lanc-desc').value || "Lançamento DRE";
             
-            if (isNaN(valor)) {
-                alert('Por favor, informe um valor válido.');
+            if (isNaN(valor) || valor <= 0) {
+                alert('Por favor, informe um valor positivo válido.');
                 return;
             }
 
-            lancamentos.push({ conta, valor, desc, mes, ano });
-            localStorage.setItem('dre_lancamentos_canais', JSON.stringify(lancamentos));
+            lancamentos.push({ canal, tipo, valor, desc, mes, ano });
+            localStorage.setItem('dre_canais_individual_lanc', JSON.stringify(lancamentos));
             document.getElementById('lanc-valor').value = '';
             document.getElementById('lanc-desc').value = '';
             calcularEAtualizarDRE();
@@ -211,7 +230,7 @@
 
         function removerLancamento(index) {
             lancamentos.splice(index, 1);
-            localStorage.setItem('dre_lancamentos_canais', JSON.stringify(lancamentos));
+            localStorage.setItem('dre_canais_individual_lanc', JSON.stringify(lancamentos));
             renderizarLancamentosRecentes();
             calcularEAtualizarDRE();
         }
@@ -225,59 +244,72 @@
             }
             lancamentos.slice().reverse().forEach((l, idx) => {
                 const realIdx = lancamentos.length - 1 - idx;
+                const canalObj = canais.find(c => c.id === l.canal);
                 const div = document.createElement('div');
                 div.className = 'flex justify-between items-center bg-white p-2 rounded border border-slate-200';
-                div.innerHTML = `<span><strong>${l.mes}/${l.ano} - ${estruturaContas[l.conta]?.nome || l.conta}</strong>: ${formatarMoeda(l.valor)}</span> <button onclick="removerLancamento(${realIdx})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>`;
+                div.innerHTML = `<span><strong>${canalObj?.nome} (${l.mes}/${l.ano})</strong> - ${l.tipo}: ${formatarMoeda(l.valor)}</span> <button onclick="removerLancamento(${realIdx})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>`;
                 container.appendChild(div);
             });
         }
 
         function calcularEAtualizarDRE() {
-            let mesesAtivos = [...new Set(lancamentos.map(l => l.mes))].sort();
+            const objCanalAtivo = canais.find(c => c.id === canalAtivo);
+            document.getElementById('titulo-dre-canal').innerText = `DRE Detalhada - ${objCanalAtivo.nome}`;
+
+            // Filtrar lançamentos do canal ativo
+            let lancsCanal = lancamentos.filter(l => l.canal === canalAtivo);
+            let mesesAtivos = [...new Set(lancsCanal.map(l => l.mes))].sort();
             if (mesesAtivos.length === 0) mesesAtivos = ["01"];
 
-            // Montar cabeçalho dinâmico com colunas de Valor e A.V. para cada mês
-            const theadTr = document.querySelector('thead tr');
-            theadTr.innerHTML = '<th class="py-3 px-4 min-w-[240px]">Canal / Grupo da DRE</th>';
+            // Montar cabeçalho da tabela (Mês e A.V. para cada um + Acumulado)
+            const theadTr = document.getElementById('dre-thead-tr');
+            let theadHtml = '<th class="py-3 px-4 min-w-[220px]">Estrutura da DRE</th>';
             mesesAtivos.forEach(mes => {
-                theadTr.innerHTML += `<th class="py-3 px-3 text-right">${mesesNomes[mes]} (R$)</th><th class="py-3 px-3 text-right">A.V. (%)</th>`;
+                theadHtml += `<th class="py-3 px-3 text-right">${mesesNomes[mes]} (R$)</th><th class="py-3 px-3 text-right">A.V. (%)</th>`;
+            });
+            theadHtml += `<th class="py-3 px-3 text-right bg-slate-200/60">Acumulado (R$)</th><th class="py-3 px-3 text-right bg-slate-200/60">A.V. Acum. (%)</th>`;
+            theadTr.innerHTML = theadHtml;
+
+            // Consolidar dados por mês
+            let dadosMes = {};
+            mesesAtivos.forEach(mes => {
+                dadosMes[mes] = { receitaBruta: 0, impostos: 0, receitaLiquida: 0, cmv: 0, lucroBruto: 0, despOperacional: 0, ebitda: 0 };
+            });
+
+            lancsCanal.forEach(l => {
+                let m = l.mes || "01";
+                if (!dadosMes[m]) {
+                    dadosMes[m] = { receitaBruta: 0, impostos: 0, receitaLiquida: 0, cmv: 0, lucroBruto: 0, despOperacional: 0, ebitda: 0 };
+                }
+                if (l.tipo === 'receita') dadosMes[m].receitaBruta += l.valor;
+                if (l.tipo === 'imposto') dadosMes[m].impostos += l.valor;
+                if (l.tipo === 'cmv') dadosMes[m].cmv += l.valor;
+                if (l.tipo === 'desp_operacional') dadosMes[m].despOperacional += l.valor;
+            });
+
+            // Calcular subtotais por mês
+            Object.keys(dadosMes).forEach(m => {
+                let dm = dadosMes[m];
+                dm.receitaLiquida = dm.receitaBruta - dm.impostos;
+                dm.lucroBruto = dm.receitaLiquida - dm.cmv;
+                dm.ebitda = dm.lucroBruto - dm.despOperacional;
+            });
+
+            // Calcular Acumulado Total
+            let acumuladoTotal = { receitaBruta: 0, impostos: 0, receitaLiquida: 0, cmv: 0, lucroBruto: 0, despOperacional: 0, ebitda: 0 };
+            Object.values(dadosMes).forEach(dm => {
+                acumuladoTotal.receitaBruta += dm.receitaBruta;
+                acumuladoTotal.impostos += dm.impostos;
+                acumuladoTotal.receitaLiquida += dm.receitaLiquida;
+                acumuladoTotal.cmv += dm.cmv;
+                acumuladoTotal.lucroBruto += dm.lucroBruto;
+                acumuladoTotal.despOperacional += dm.despOperacional;
+                acumuladoTotal.ebitda += dm.ebitda;
             });
 
             const tbody = document.getElementById('dre-table-body');
             tbody.innerHTML = '';
 
-            let dadosMes = {};
-            mesesAtivos.forEach(mes => {
-                dadosMes[mes] = {
-                    lancamentosConta: {},
-                    receitaTotal: 0
-                };
-                Object.keys(estruturaContas).forEach(c => dadosMes[mes].lancamentosConta[c] = 0);
-            });
-
-            lancamentos.forEach(l => {
-                let m = l.mes || "01";
-                if (!dadosMes[m]) {
-                    dadosMes[m] = { lancamentosConta: {}, receitaTotal: 0 };
-                    Object.keys(estruturaContas).forEach(c => dadosMes[m].lancamentosConta[c] = 0);
-                }
-                dadosMes[m].lancamentosConta[l.conta] = (dadosMes[m].lancamentosConta[l.conta] || 0) + l.valor;
-            });
-
-            // Calcular receita total de cada mês para servir de base da Análise Vertical (100%)
-            mesesAtivos.forEach(mes => {
-                let dm = dadosMes[mes];
-                Object.keys(dm.lancamentosConta).forEach(conta => {
-                    let info = estruturaContas[conta];
-                    let val = dm.lancamentosConta[conta];
-                    if (info.tipo === 'receita') {
-                        dm.receitaTotal += val;
-                    }
-                });
-                if (dm.receitaTotal === 0) dm.receitaTotal = 1; // Evitar divisão por zero
-            });
-
-            // Função para renderizar linhas na tabela
             function adicionarLinha(nome, seletorValor, isHeader = false, isSubtotal = false, forcarParenteses = false) {
                 let tr = document.createElement('tr');
                 if (isHeader) {
@@ -289,10 +321,13 @@
                 }
 
                 let html = `<td class="px-4 py-2.5">${nome}</td>`;
+                
+                // Meses individuais
                 mesesAtivos.forEach(mes => {
                     let dm = dadosMes[mes];
                     let val = seletorValor(dm);
-                    let av = (Math.abs(val) / dm.receitaTotal) * 100;
+                    let baseAV = dm.receitaBruta > 0 ? dm.receitaBruta : 1;
+                    let av = (Math.abs(val) / baseAV) * 100;
                     let valExibicao = forcarParenteses && val > 0 ? -val : val;
 
                     html += `
@@ -300,60 +335,34 @@
                         <td class="py-2.5 px-3 text-right text-slate-500">${formatarPercentual(av)}</td>
                     `;
                 });
+
+                // Colunas Acumuladas
+                let valAcum = seletorValor(acumuladoTotal);
+                let baseAcumAV = acumuladoTotal.receitaBruta > 0 ? acumuladoTotal.receitaBruta : 1;
+                let avAcum = (Math.abs(valAcum) / baseAcumAV) * 100;
+                let valAcumExibicao = forcarParenteses && valAcum > 0 ? -valAcum : valAcum;
+
+                html += `
+                    <td class="py-2.5 px-3 text-right font-bold bg-slate-50">${formatarMoeda(valAcumExibicao)}</td>
+                    <td class="py-2.5 px-3 text-right font-bold text-slate-600 bg-slate-50">${formatarPercentual(avAcum)}</td>
+                `;
+
                 tr.innerHTML = html;
                 tbody.appendChild(tr);
             }
 
-            // Renderizar a estrutura vertical por canal conforme solicitado
-            canaisLista.forEach(canalObj => {
-                let idC = canalObj.id;
-
-                // Cabeçalho do Canal
-                adicionarLinha(canalObj.nome, dm => {
-                    let rec = 0, desp = 0;
-                    Object.keys(estruturaContas).forEach(c => {
-                        if (estruturaContas[c].canal === idC) {
-                            if (estruturaContas[c].tipo === 'receita') rec += dm.lancamentosConta[c];
-                            if (estruturaContas[c].tipo === 'despesa') desp += Math.abs(dm.lancamentosConta[c]);
-                        }
-                    });
-                    return rec - desp; // Resultado líquido do canal
-                }, true, false);
-
-                // Receita do Canal
-                adicionarLinha(`    • Receita do Canal`, dm => {
-                    let rec = 0;
-                    Object.keys(estruturaContas).forEach(c => {
-                        if (estruturaContas[c].canal === idC && estruturaContas[c].tipo === 'receita') {
-                            rec += dm.lancamentosConta[c];
-                        }
-                    });
-                    return rec;
-                }, false, false);
-
-                // Despesa / Custo específico do Canal
-                adicionarLinha(`    • (-) Despesas / Custos Específicos`, dm => {
-                    let desp = 0;
-                    Object.keys(estruturaContas).forEach(c => {
-                        if (estruturaContas[c].canal === idC && estruturaContas[c].tipo === 'despesa') {
-                            desp += Math.abs(dm.lancamentosConta[c]);
-                        }
-                    });
-                    return desp;
-                }, false, false, true);
-            });
-
-            // Totais Gerais
-            adicionarLinha("RECEITA BRUTA TOTAL", dm => {
-                let total = 0;
-                Object.keys(estruturaContas).forEach(c => {
-                    if (estruturaContas[c].tipo === 'receita') total += dm.lancamentosConta[c];
-                });
-                return total;
-            }, true, true);
+            // Estrutura padrão DRE por canal
+            adicionarLinha("Receita Bruta", dm => dm.receitaBruta, true, false);
+            adicionarLinha("(-) Impostos sobre Vendas", dm => dm.impostos, false, false, true);
+            adicionarLinha("(=) Receita Líquida", dm => dm.receitaLiquida, false, true);
+            adicionarLinha("(-) Custo das Mercadorias Vendidas (CMV)", dm => dm.cmv, true, false, true);
+            adicionarLinha("(=) Lucro Bruto", dm => dm.lucroBruto, false, true);
+            adicionarLinha("(-) Despesas Operacionais", dm => dm.despOperacional, true, false, true);
+            adicionarLinha("(=) EBITDA / Resultado Operacional", dm => dm.ebitda, false, true);
         }
 
-        popularSelectContas();
+        popularSelectCanais();
+        renderizarBotoesCanais();
         calcularEAtualizarDRE();
     </script>
 </body>
