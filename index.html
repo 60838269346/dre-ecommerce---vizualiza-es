@@ -18,7 +18,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-bold tracking-tight">DRE & Análise Vertical</h1>
-                    <p class="text-xs text-slate-400">Painel de Gestão e Contas Analíticas Completas</p>
+                    <p class="text-xs text-slate-400">Visão Sintética Consolidada</p>
                 </div>
             </div>
             <div class="flex items-center space-x-3">
@@ -55,14 +55,14 @@
         <!-- Tabela DRE -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
-                <h2 class="font-bold text-slate-800"><i class="fa-solid fa-table text-slate-500 mr-2"></i> Demonstração do Resultado do Exercício - Completa</h2>
+                <h2 class="font-bold text-slate-800"><i class="fa-solid fa-table text-slate-500 mr-2"></i> Demonstração do Resultado do Exercício - Sintética</h2>
                 <div class="text-xs text-slate-500">Base A.V.: Receita Líquida (100%)</div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-sm">
                     <thead>
                         <tr class="bg-slate-100/70 text-slate-700 font-semibold border-b border-slate-200">
-                            <th class="py-3 px-6">Conta / Descrição</th>
+                            <th class="py-3 px-6">Grupo / Conta Sintética</th>
                             <th class="py-3 px-6 text-right">Valor (R$)</th>
                             <th class="py-3 px-6 text-right">A.V. (%)</th>
                         </tr>
@@ -84,7 +84,7 @@
             </div>
             <div class="p-6 space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Selecione a Conta Contábil</label>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Selecione a Conta</label>
                     <select id="lanc-conta" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                         <!-- Preenchido dinamicamente via JS -->
                     </select>
@@ -111,74 +111,55 @@
 
     <!-- Lógica da Aplicação -->
     <script>
-        // Mapeamento Completo de Todas as Contas Analíticas
         const estruturaContas = {
-            // Receitas
-            "3.1.1.01.001": { nome: "3.1.1.01.001 - Receita com revenda de Mercadoria (E)", tipo: "rec_bruta" },
-            
-            // Impostos
-            "3.1.3.01.001": { nome: "3.1.3.01.001 - ICMS (E)", tipo: "imposto" },
-            "3.1.3.01.002": { nome: "3.1.3.01.002 - PIS (E)", tipo: "imposto" },
-            "3.1.3.01.003": { nome: "3.1.3.01.003 - COFINS (E)", tipo: "imposto" },
-
-            // CMV
-            "4.1.1.01.001": { nome: "4.1.1.01.001 - Custo de Mercadoria Vendida", tipo: "cmv" },
-
-            // SG&A - Pessoal
-            "4.2.1.02.001": { nome: "4.2.1.02.001 - Salários e Proventos", tipo: "sga_pessoal" },
-            "4.2.1.02.002": { nome: "4.2.1.02.002 - Contribuição Previdenciária (INSS)", tipo: "sga_pessoal" },
-            "4.2.1.02.003": { nome: "4.2.1.02.003 - FGTS", tipo: "sga_pessoal" },
-            "4.2.1.02.004": { nome: "4.2.1.02.004 - 13. Salário/Grat.Natalina", tipo: "sga_pessoal" },
-            "4.2.1.02.005": { nome: "4.2.1.02.005 - Férias", tipo: "sga_pessoal" },
-            "4.2.1.02.008": { nome: "4.2.1.02.008 - Alimentação do Trabalhador", tipo: "sga_pessoal" },
-            "4.2.1.02.009": { nome: "4.2.1.02.009 - Transporte do Trabalhador (VT)", tipo: "sga_pessoal" },
-            "4.2.1.02.010": { nome: "4.2.1.02.010 - Planos de Saúde e Assit.Médica ao Trab", tipo: "sga_pessoal" },
-            "4.2.1.02.011": { nome: "4.2.1.02.011 - SSMT", tipo: "sga_pessoal" },
-            "4.2.1.02.012": { nome: "4.2.1.02.012 - Seguros de vida - trabalhador", tipo: "sga_pessoal" },
-            "4.2.1.02.014": { nome: "4.2.1.02.014 - Demais Premiações a empregados", tipo: "sga_pessoal" },
-            "4.2.1.02.015": { nome: "4.2.1.02.015 - Beneficios Assistenciais - Gympass", tipo: "sga_pessoal" },
-            "4.2.1.02.016": { nome: "4.2.1.02.016 - Produtividade", tipo: "sga_pessoal" },
-            "4.2.1.02.018": { nome: "4.2.1.02.018 - Ajuda de Custo", tipo: "sga_pessoal" },
-            "4.2.1.02.019": { nome: "4.2.1.02.019 - Outras gratificações e remuneracões", tipo: "sga_pessoal" },
-
-            // SG&A - Comerciais e Operacionais de Venda
-            "4.2.1.01.002": { nome: "4.2.1.01.002 - Gastos com embalagens", tipo: "sga_comercial" },
-            "4.2.1.01.006": { nome: "4.2.1.01.006 - Viagens e estadias comerciais", tipo: "sga_comercial" },
-            "4.2.1.01.008": { nome: "4.2.1.01.008 - Comissão iFood", tipo: "sga_comercial" },
-            "4.2.1.01.115": { nome: "4.2.1.01.115 - Frete Entrega Cliente", tipo: "sga_comercial" },
-            "4.2.1.01.119": { nome: "4.2.1.01.119 - Chargeback", tipo: "sga_comercial" },
-            "4.2.1.01.121": { nome: "4.2.1.01.121 - Licenciamento APP", tipo: "sga_comercial" },
-            "4.2.1.06.005": { nome: "4.2.1.06.005 - Assessorias de Marketing", tipo: "sga_comercial" },
-            "4.2.1.06.009": { nome: "4.2.1.06.009 - Midia de Performance", tipo: "sga_comercial" },
-            "4.2.1.09.007": { nome: "4.2.1.09.007 - Comissões Mercado Livre", tipo: "sga_comercial" },
-            "4.3.1.02.001": { nome: "4.3.1.02.001 - Comissões Cartões de Débito/Crédito", tipo: "sga_comercial" },
-
-            // SG&A - Administrativas
-            "4.2.1.03.003": { nome: "4.2.1.03.003 - Telefone e Internet", tipo: "sga_adm" },
-            "4.2.1.03.007": { nome: "4.2.1.03.007 - Segurança e Vigilância Instalações", tipo: "sga_adm" },
-            "4.2.1.07.003": { nome: "4.2.1.07.003 - Material de Expediente e Escritório", tipo: "sga_adm" },
-            "4.2.1.07.010": { nome: "4.2.1.07.010 - Assessoria e Consultoria em Gestão", tipo: "sga_adm" },
-            "4.2.1.07.012": { nome: "4.2.1.07.012 - Assessoria e Consultoria Tecnologia da Informação", tipo: "sga_adm" },
-
-            // SG&A - Tributárias
-            "4.2.1.08.017": { nome: "4.2.1.08.017 - FUMACOP - Fundo Combate à Pobreza", tipo: "sga_tributaria" },
-
-            // Outras
-            "3.1.7.03.002": { nome: "3.1.7.03.002 - Recuperações de Despesas", tipo: "outras_rec" },
-            "4.3.1.01.003": { nome: "4.3.1.01.003 - Descontos obtidos", tipo: "outras_rec" }
+            "3.1.1.01.001": { nome: "Receita com revenda de Mercadorias", tipo: "rec_bruta" },
+            "3.1.3.01.001": { nome: "ICMS", tipo: "imposto" },
+            "3.1.3.01.002": { nome: "PIS", tipo: "imposto" },
+            "3.1.3.01.003": { nome: "COFINS", tipo: "imposto" },
+            "4.1.1.01.001": { nome: "Custo das Mercadorias Vendidas (CMV)", tipo: "cmv" },
+            "4.2.1.02.001": { nome: "Salários e Proventos", tipo: "sga_pessoal" },
+            "4.2.1.02.002": { nome: "Contribuição Previdenciária (INSS)", tipo: "sga_pessoal" },
+            "4.2.1.02.003": { nome: "FGTS", tipo: "sga_pessoal" },
+            "4.2.1.02.004": { nome: "13. Salário", tipo: "sga_pessoal" },
+            "4.2.1.02.005": { nome: "Férias", tipo: "sga_pessoal" },
+            "4.2.1.02.008": { nome: "Alimentação do Trabalhador", tipo: "sga_pessoal" },
+            "4.2.1.02.009": { nome: "Transporte do Trabalhador (VT)", tipo: "sga_pessoal" },
+            "4.2.1.02.010": { nome: "Planos de Saúde", tipo: "sga_pessoal" },
+            "4.2.1.02.011": { nome: "SSMT", tipo: "sga_pessoal" },
+            "4.2.1.02.012": { nome: "Seguro de vida", tipo: "sga_pessoal" },
+            "4.2.1.02.014": { nome: "Premiações a empregados", tipo: "sga_pessoal" },
+            "4.2.1.02.015": { nome: "Beneficios Assistenciais - Gympass", tipo: "sga_pessoal" },
+            "4.2.1.02.016": { nome: "Produtividade", tipo: "sga_pessoal" },
+            "4.2.1.02.018": { nome: "Ajuda de Custo", tipo: "sga_pessoal" },
+            "4.2.1.02.019": { nome: "Outras gratificações", tipo: "sga_pessoal" },
+            "4.2.1.01.002": { nome: "Gastos com embalagens", tipo: "sga_comercial" },
+            "4.2.1.01.006": { nome: "Viagens e estadias comerciais", tipo: "sga_comercial" },
+            "4.2.1.01.008": { nome: "Comissão iFood", tipo: "sga_comercial" },
+            "4.2.1.01.115": { nome: "Frete Entrega Cliente", tipo: "sga_comercial" },
+            "4.2.1.01.119": { nome: "Chargeback", tipo: "sga_comercial" },
+            "4.2.1.01.121": { nome: "Licenciamento APP", tipo: "sga_comercial" },
+            "4.2.1.06.005": { nome: "Assessorias de Marketing", tipo: "sga_comercial" },
+            "4.2.1.06.009": { nome: "Midia de Performance", tipo: "sga_comercial" },
+            "4.2.1.09.007": { nome: "Comissões Mercado Livre", tipo: "sga_comercial" },
+            "4.3.1.02.001": { nome: "Comissões Cartões de Débito/Crédito", tipo: "sga_comercial" },
+            "4.2.1.03.003": { nome: "Telefone e Internet", tipo: "sga_adm" },
+            "4.2.1.03.007": { nome: "Segurança e Vigilância Instalações", tipo: "sga_adm" },
+            "4.2.1.07.003": { nome: "Material de Expediente", tipo: "sga_adm" },
+            "4.2.1.07.010": { nome: "Assessoria e Consultoria em Gestão", tipo: "sga_adm" },
+            "4.2.1.07.012": { nome: "Assessoria e Consultoria TI", tipo: "sga_adm" },
+            "4.2.1.08.017": { nome: "FUMACOP", tipo: "sga_tributaria" }
         };
 
-        // Lançamentos com valores completos do relatório
         let lancamentos = JSON.parse(localStorage.getItem('dre_lancamentos')) || [
-            { conta: "3.1.1.01.001", valor: 10950856.90, desc: "Receita com revenda de Mercadoria" },
+            { conta: "3.1.1.01.001", valor: 10950856.90, desc: "Receita com revenda" },
             { conta: "3.1.3.01.001", valor: 440407.30, desc: "ICMS" },
             { conta: "3.1.3.01.002", valor: 148077.62, desc: "PIS" },
             { conta: "3.1.3.01.003", valor: 683805.96, desc: "COFINS" },
-            { conta: "4.1.1.01.001", valor: 7419766.91, desc: "Custo de Mercadoria Vendida" },
-            { conta: "4.2.1.02.001", valor: 102175.38, desc: "Salários e Proventos" },
+            { conta: "4.1.1.01.001", valor: 7419766.91, desc: "CMV" },
+            { conta: "4.2.1.02.001", valor: 102175.38, desc: "Salários" },
             { conta: "4.2.1.02.002", valor: 33033.53, desc: "INSS" },
             { conta: "4.2.1.02.003", valor: 9170.29, desc: "FGTS" },
-            { conta: "4.2.1.02.004", valor: 7138.19, desc: "13. Salário" },
+            { conta: "4.2.1.02.004", valor: 7138.19, desc: "13 Salário" },
             { conta: "4.2.1.02.005", valor: 10986.43, desc: "Férias" },
             { conta: "4.2.1.02.008", valor: 9343.86, desc: "Alimentação" },
             { conta: "4.2.1.02.009", valor: 973.69, desc: "VT" },
@@ -190,7 +171,7 @@
             { conta: "4.2.1.02.016", valor: 2400.00, desc: "Produtividade" },
             { conta: "4.2.1.02.018", valor: 1634.82, desc: "Ajuda de Custo" },
             { conta: "4.2.1.02.019", valor: 5648.00, desc: "Outras gratificações" },
-            { conta: "4.2.1.01.002", valor: 45000.00, desc: "Gastos com embalagens" },
+            { conta: "4.2.1.01.002", valor: 45000.00, desc: "Embalagens" },
             { conta: "4.2.1.01.006", valor: 12500.00, desc: "Viagens" }
         ];
 
@@ -303,7 +284,7 @@
 
             const baseAV = recLiquida > 0 ? recLiquida : 1;
 
-            function adicionarLinha(nome, valor, isHeader = false, isSubtotal = false, indent = false) {
+            function adicionarLinha(nome, valor, isHeader = false, isSubtotal = false) {
                 let av = (valor / baseAV) * 100;
                 let tr = document.createElement('tr');
                 
@@ -315,64 +296,28 @@
                     tr.className = 'hover:bg-slate-50/80 transition';
                 }
 
-                let paddingClass = indent ? 'pl-10 pr-6 py-2.5 text-xs text-slate-600' : 'px-6 py-2.5';
-                
                 tr.innerHTML = `
-                    <td class="${paddingClass}">${nome}</td>
-                    <td class="py-2.5 px-6 text-right font-medium">${formatarMoeda(valor)}</td>
-                    <td class="py-2.5 px-6 text-right text-slate-500">${formatarPercentual(av)}</td>
+                    <td class="px-6 py-3">${nome}</td>
+                    <td class="py-3 px-6 text-right font-medium">${formatarMoeda(valor)}</td>
+                    <td class="py-3 px-6 text-right text-slate-500">${formatarPercentual(av)}</td>
                 `;
                 tbody.appendChild(tr);
             }
 
-            // 1. Receita Bruta
+            // Exibir apenas contas e totalizações sintéticas consolidadas
             adicionarLinha("Receita Bruta Total", recBruta, true);
-            adicionarLinha(estruturaContas["3.1.1.01.001"].nome, totaisPorConta["3.1.1.01.001"], false, false, true);
-
-            // 2. Impostos
-            adicionarLinha("(-) Impostos sobre Vendas", impostos, true);
-            ["3.1.3.01.002", "3.1.3.01.001", "3.1.3.01.003"].forEach(c => {
-                if(totaisPorConta[c] > 0) adicionarLinha(estruturaContas[c].nome, totaisPorConta[c], false, false, true);
-            });
-
-            // Receita Líquida
+            adicionarLinha("(-) Impostos sobre Vendas", impostos, false, false);
             adicionarLinha("(=) Receita Líquida", recLiquida, false, true);
-
-            // 3. CMV
+            
             adicionarLinha("(-) Custo das Mercadorias Vendidas (CMV)", cmv, true);
-            adicionarLinha(estruturaContas["4.1.1.01.001"].nome, totaisPorConta["4.1.1.01.001"], false, false, true);
-
-            // Lucro Bruto
             adicionarLinha("(=) Lucro Bruto", lucroBruto, false, true);
 
-            // 4. SG&A Detalhado
             adicionarLinha("(-) Despesas Operacionais (SG&A)", totalSga, true);
+            adicionarLinha("    • Despesas com Pessoal", sgaPessoal, false, false);
+            adicionarLinha("    • Despesas Comerciais e Operacionais", sgaComercial, false, false);
+            adicionarLinha("    • Despesas Administrativas", sgaAdm, false, false);
+            if(sgaTributaria > 0) adicionarLinha("    • Despesas Tributárias", sgaTributaria, false, false);
 
-            // Pessoal
-            adicionarLinha("Gastos com Pessoal", sgaPessoal, false, true, true);
-            Object.keys(totaisPorConta).forEach(conta => {
-                if (estruturaContas[conta].tipo === 'sga_pessoal' && totaisPorConta[conta] > 0) {
-                    adicionarLinha(estruturaContas[conta].nome, totaisPorConta[conta], false, false, true);
-                }
-            });
-
-            // Comerciais
-            adicionarLinha("Despesas Comerciais", sgaComercial, false, true, true);
-            Object.keys(totaisPorConta).forEach(conta => {
-                if (estruturaContas[conta].tipo === 'sga_comercial' && totaisPorConta[conta] > 0) {
-                    adicionarLinha(estruturaContas[conta].nome, totaisPorConta[conta], false, false, true);
-                }
-            });
-
-            // Administrativas
-            adicionarLinha("Despesas Administrativas", sgaAdm, false, true, true);
-            Object.keys(totaisPorConta).forEach(conta => {
-                if (estruturaContas[conta].tipo === 'sga_adm' && totaisPorConta[conta] > 0) {
-                    adicionarLinha(estruturaContas[conta].nome, totaisPorConta[conta], false, false, true);
-                }
-            });
-
-            // EBITDA
             adicionarLinha("(=) EBITDA", ebitda, false, true);
         }
 
