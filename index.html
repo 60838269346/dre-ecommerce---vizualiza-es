@@ -166,7 +166,7 @@
                 </div>
             </div>
             <div class="px-6 py-4 bg-slate-50 border-t border-slate-100">
-                <h4 class="text-xs font-bold text-slate-500 uppercase mb-2">Lançamentos Recentes</h4>
+                <h4 class="text-xs font-bold text-slate-500 uppercase mb-2">Lançamentos Oficiais Fixados</h4>
                 <div id="lista-lancamentos-recentes" class="max-h-32 overflow-y-auto space-y-1 text-xs text-slate-600"></div>
             </div>
         </div>
@@ -189,8 +189,10 @@
         let canalAtivo = "1) IFOOD";
         let anoAtivo = "2026";
 
-        let lancamentos = JSON.parse(localStorage.getItem('dre_canais_v3_lanc')) || [
-            { canal: "1) IFOOD", tipo: "receita_bruta", valor: 10000, desc: "Exemplo Inicial", mes: "01", ano: "2026" }
+        // DADOS OFICIAIS FIXOS NO CÓDIGO (Visível para todos que abrirem o link)
+        let lancamentos = [
+            { canal: "2) APP/SITE", tipo: "receita_bruta", valor: 15000, desc: "Faturamento Janeiro", mes: "01", ano: "2026" },
+            { canal: "2) APP/SITE", tipo: "impostos", valor: 1500, desc: "Impostos Janeiro", mes: "01", ano: "2026" }
         ];
 
         function formatarMoeda(valor) {
@@ -255,8 +257,6 @@
                 ano: String(ano) 
             });
             
-            localStorage.setItem('dre_canais_v3_lanc', JSON.stringify(lancamentos));
-            
             document.getElementById('lanc-valor').value = '';
             document.getElementById('lanc-desc').value = '';
             
@@ -267,13 +267,7 @@
             renderizarBotoesCanais();
             calcularEAtualizarDRE();
             toggleAdminModal();
-        }
-
-        function removerLancamento(index) {
-            lancamentos.splice(index, 1);
-            localStorage.setItem('dre_canais_v3_lanc', JSON.stringify(lancamentos));
-            renderizarLancamentosRecentes();
-            calcularEAtualizarDRE();
+            alert('Lançamento adicionado na sua sessão! Para torná-lo oficial para todos, copie o novo array de lançamentos gerados no código do GitHub.');
         }
 
         function renderizarLancamentosRecentes() {
@@ -284,11 +278,10 @@
                 return;
             }
             lancamentos.slice().reverse().forEach((l, idx) => {
-                const realIdx = lancamentos.length - 1 - idx;
                 const canalObj = canais.find(c => c.id === l.canal);
                 const div = document.createElement('div');
                 div.className = 'flex justify-between items-center bg-white p-2 rounded border border-slate-200';
-                div.innerHTML = `<span><strong>${canalObj?.nome || l.canal} (${l.mes}/${l.ano})</strong> - ${l.tipo}: ${formatarMoeda(l.valor)}</span> <button onclick="removerLancamento(${realIdx})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>`;
+                div.innerHTML = `<span><strong>${canalObj?.nome || l.canal} (${l.mes}/${l.ano})</strong> - ${l.tipo}: ${formatarMoeda(l.valor)}</span>`;
                 container.appendChild(div);
             });
         }
