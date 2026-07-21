@@ -171,24 +171,15 @@
         };
 
         const canais = [
-            { id: "ifood", nome: "1) IFOOD" },
-            { id: "app_site", nome: "2) APP/SITE" },
-            { id: "marketplace", nome: "3) MARKETPLACE" }
+            { id: "1) IFOOD", nome: "1) IFOOD" },
+            { id: "2) APP/SITE", nome: "2) APP/SITE" },
+            { id: "3) MARKETPLACE", nome: "3) MARKETPLACE" }
         ];
 
-        let canalAtivo = "app_site";
+        let canalAtivo = "1) IFOOD";
         let anoAtivo = "2026";
 
-        let lancamentos = JSON.parse(localStorage.getItem('dre_canais_v3_lanc')) || [
-            { canal: "app_site", tipo: "receita_bruta", valor: 500000.00, desc: "Vendas App/Site Jan", mes: "01", ano: "2026" },
-            { canal: "app_site", tipo: "impostos", valor: 40000.00, desc: "Impostos App/Site", mes: "01", ano: "2026" },
-            { canal: "app_site", tipo: "cmv", valor: 200000.00, desc: "CMV App/Site", mes: "01", ano: "2026" },
-            { canal: "app_site", tipo: "pessoal", valor: 30000.00, desc: "Pessoal App/Site", mes: "01", ano: "2026" },
-            { canal: "app_site", tipo: "fretes", valor: 25000.00, desc: "Frete App/Site", mes: "01", ano: "2026" },
-            { canal: "app_site", tipo: "receita_bruta", valor: 550000.00, desc: "Vendas App/Site Fev", mes: "02", ano: "2026" },
-            { canal: "ifood", tipo: "receita_bruta", valor: 300000.00, desc: "Vendas iFood Jan", mes: "01", ano: "2026" },
-            { canal: "marketplace", tipo: "receita_bruta", valor: 150000.00, desc: "Vendas Marketplace Jan", mes: "01", ano: "2026" }
-        ];
+        let lancamentos = JSON.parse(localStorage.getItem('dre_canais_v3_lanc')) || [];
 
         function formatarMoeda(valor) {
             let absVal = Math.abs(valor);
