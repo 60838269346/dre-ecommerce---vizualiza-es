@@ -38,7 +38,6 @@
 
     <!-- Conteúdo Principal -->
     <main class="max-w-7xl mx-auto px-4 py-8">
-        
         <!-- Filtros e Resumo Rápido -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
@@ -157,69 +156,65 @@
 
     <!-- Lógica da Aplicação -->
     <script>
-        // Mapeamento de Contas e Estrutura DRE
+        // Mapeamento de Contas e Estrutura DRE (Analíticas e Sintéticas detalhadas)
         const estruturaContas = {
-            "3.1.1.01.001": { nome: "3.1.1.01.001-Receita com revenda de Mercadoria (E)", tipo: "rec_bruta", pai: "Receita com Revenda de Mercadorias" },
-            "3.1.3.01.002": { nome: "3.1.3.01.002-PIS (E)", tipo: "imposto", pai: "PIS" },
-            "3.1.3.01.001": { nome: "3.1.3.01.001-ICMS (E)", tipo: "imposto", pai: "ICMS" },
-            "3.1.3.01.003": { nome: "3.1.3.01.003-COFINS (E)", tipo: "imposto", pai: "COFINS" },
-            "4.1.1.01.001": { nome: "4.1.1.01.001-Custo de Mercadoria Vendida", tipo: "cmv", pai: "Custo das Mercadorias Vendidas" },
+            "3.1.1.01.001": { nome: "3.1.1.01.001 - Receita com revenda de Mercadoria (E)", tipo: "rec_bruta", pai: "Receita com Revenda de Mercadorias" },
+            "3.1.3.01.002": { nome: "3.1.3.01.002 - PIS (E)", tipo: "imposto", pai: "PIS" },
+            "3.1.3.01.001": { nome: "3.1.3.01.001 - ICMS (E)", tipo: "imposto", pai: "ICMS" },
+            "3.1.3.01.003": { nome: "3.1.3.01.003 - COFINS (E)", tipo: "imposto", pai: "COFINS" },
+            "4.1.1.01.001": { nome: "4.1.1.01.001 - Custo de Mercadoria Vendida", tipo: "cmv", pai: "Custo das Mercadorias Vendidas" },
             
-            // Pessoal
-            "4.2.1.02.001": { nome: "4.2.1.02.001-Salários e Proventos", tipo: "sga_pessoal", pai: "Gastos com Pessoal - SG&A" },
-            "4.2.1.02.002": { nome: "4.2.1.02.002-Contribuição Previdenciária (INSS)", tipo: "sga_pessoal", pai: "Gastos com Pessoal - SG&A" },
-            "4.2.1.02.003": { nome: "4.2.1.02.003-FGTS", tipo: "sga_pessoal", pai: "Gastos com Pessoal - SG&A" },
-            "4.2.1.02.004": { nome: "4.2.1.02.004-13. Salário/Grat.Natalina", tipo: "sga_pessoal", pai: "Gastos com Pessoal - SG&A" },
-            "4.2.1.02.005": { nome: "4.2.1.02.005-Férias", tipo: "sga_pessoal", pai: "Gastos com Pessoal - SG&A" },
-            "4.2.1.02.008": { nome: "4.2.1.02.008-Alimentação do Trabalhador", tipo: "sga_pessoal", pai: "Gastos com Pessoal - SG&A" },
-            "4.2.1.02.009": { nome: "4.2.1.02.009-Transporte do Trabalhador (VT)", tipo: "sga_pessoal", pai: "Gastos com Pessoal - SG&A" },
-            "4.2.1.02.010": { nome: "4.2.1.02.010-Planos de Saúde e Assit.Médica ao Trab", tipo: "sga_pessoal", pai: "Gastos com Pessoal - SG&A" },
-            "4.2.1.02.016": { nome: "4.2.1.02.016-Produtividade", tipo: "sga_pessoal", pai: "Gastos com Pessoal - SG&A" },
-            "4.2.1.02.018": { nome: "4.2.1.02.018-Ajuda de Custo", tipo: "sga_pessoal", pai: "Gastos com Pessoal - SG&A" },
+            // SG&A - Pessoal
+            "4.2.1.02.001": { nome: "4.2.1.02.001 - Salários e Proventos", tipo: "sga_pessoal", pai: "Gastos com Pessoal - SG&A" },
+            "4.2.1.02.002": { nome: "4.2.1.02.002 - Contribuição Previdenciária (INSS)", tipo: "sga_pessoal", pai: "Gastos com Pessoal - SG&A" },
+            "4.2.1.02.003": { nome: "4.2.1.02.003 - FGTS", tipo: "sga_pessoal", pai: "Gastos com Pessoal - SG&A" },
+            "4.2.1.02.004": { nome: "4.2.1.02.004 - 13. Salário/Grat.Natalina", tipo: "sga_pessoal", pai: "Gastos com Pessoal - SG&A" },
+            "4.2.1.02.005": { nome: "4.2.1.02.005 - Férias", tipo: "sga_pessoal", pai: "Gastos com Pessoal - SG&A" },
+            "4.2.1.02.008": { nome: "4.2.1.02.008 - Alimentação do Trabalhador", tipo: "sga_pessoal", pai: "Gastos com Pessoal - SG&A" },
+            "4.2.1.02.009": { nome: "4.2.1.02.009 - Transporte do Trabalhador (VT)", tipo: "sga_pessoal", pai: "Gastos com Pessoal - SG&A" },
+            "4.2.1.02.010": { nome: "4.2.1.02.010 - Planos de Saúde e Assit.Médica", tipo: "sga_pessoal", pai: "Gastos com Pessoal - SG&A" },
+            "4.2.1.02.016": { nome: "4.2.1.02.016 - Produtividade", tipo: "sga_pessoal", pai: "Gastos com Pessoal - SG&A" },
+            "4.2.1.02.018": { nome: "4.2.1.02.018 - Ajuda de Custo", tipo: "sga_pessoal", pai: "Gastos com Pessoal - SG&A" },
 
-            // Comerciais
-            "4.2.1.01.002": { nome: "4.2.1.01.002-Gastos com embalagens", tipo: "sga_comercial", pai: "Despesas Comerciais" },
-            "4.2.1.01.006": { nome: "4.2.1.01.006-Viagens e estadias comerciais", tipo: "sga_comercial", pai: "Despesas Comerciais" },
-            "4.2.1.01.008": { nome: "4.2.1.01.008-Comissão iFood", tipo: "sga_comercial", pai: "Despesas Comerciais" },
-            "4.2.1.01.115": { nome: "4.2.1.01.115-Frete Entrega Cliente", tipo: "sga_comercial", pai: "Despesas Comerciais" },
-            "4.2.1.01.119": { nome: "4.2.1.01.119-Chargeback", tipo: "sga_comercial", pai: "Despesas Comerciais" },
-            "4.2.1.01.121": { nome: "4.2.1.01.121-Licenciamento APP", tipo: "sga_comercial", pai: "Despesas Comerciais" },
-            "4.2.1.06.005": { nome: "4.2.1.06.005-Assessorias de Marketing", tipo: "sga_comercial", pai: "Despesas Comerciais" },
-            "4.2.1.06.009": { nome: "4.2.1.06.009-Midia de Performance", tipo: "sga_comercial", pai: "Despesas Comerciais" },
-            "4.2.1.09.007": { nome: "4.2.1.09.007-Comissões Mercado Livre", tipo: "sga_comercial", pai: "Despesas Comerciais" },
-            "4.3.1.02.001": { nome: "4.3.1.02.001-Comissões Cartões de Débito e Crédito", tipo: "sga_comercial", pai: "Despesas Comerciais" },
+            // SG&A - Comerciales (Analíticas detalhadas solicitadas)
+            "4.2.1.01.002": { nome: "4.2.1.01.002 - Gastos com embalagens", tipo: "sga_comercial", pai: "Despesas Comerciais" },
+            "4.2.1.01.006": { nome: "4.2.1.01.006 - Viagens e estadias comerciais", tipo: "sga_comercial", pai: "Despesas Comerciais" },
+            "4.2.1.01.008": { nome: "4.2.1.01.008 - Comissão iFood", tipo: "sga_comercial", pai: "Despesas Comerciais" },
+            "4.2.1.01.115": { nome: "4.2.1.01.115 - Frete Entrega Cliente", tipo: "sga_comercial", pai: "Despesas Comerciais" },
+            "4.2.1.01.119": { nome: "4.2.1.01.119 - Chargeback", tipo: "sga_comercial", pai: "Despesas Comerciais" },
+            "4.2.1.01.121": { nome: "4.2.1.01.121 - Licenciamento APP", tipo: "sga_comercial", pai: "Despesas Comerciais" },
+            "4.2.1.06.005": { nome: "4.2.1.06.005 - Assessorias de Marketing", tipo: "sga_comercial", pai: "Despesas Comerciais" },
+            "4.2.1.06.009": { nome: "4.2.1.06.009 - Midia de Performance", tipo: "sga_comercial", pai: "Despesas Comerciais" },
+            "4.2.1.09.007": { nome: "4.2.1.09.007 - Comissões Mercado Livre", tipo: "sga_comercial", pai: "Despesas Comerciais" },
+            "4.3.1.02.001": { nome: "4.3.1.02.001 - Comissões Cartões de Débito/Crédito", tipo: "sga_comercial", pai: "Despesas Comerciais" },
 
-            // Administrativas
-            "4.2.1.03.003": { nome: "4.2.1.03.003-Telefone e Internet", tipo: "sga_admin", pai: "Despesas Administrativas" },
-            "4.2.1.03.007": { nome: "4.2.1.03.007-Segurança e Vigilância Instalações", tipo: "sga_admin", pai: "Despesas Administrativas" },
-            "4.2.1.07.003": { nome: "4.2.1.07.003-Material de Expediente e Escritório", tipo: "sga_admin", pai: "Despesas Administrativas" },
-            "4.2.1.07.010": { nome: "4.2.1.07.010-Assessoria e Consultoria em Gestão", tipo: "sga_admin", pai: "Despesas Administrativas" },
-            "4.2.1.07.012": { nome: "4.2.1.07.012-Assessoria e Consultoria Tecnologia da Informação", tipo: "sga_admin", pai: "Despesas Administrativas" },
+            // SG&A - Administrativas
+            "4.2.1.03.003": { nome: "4.2.1.03.003 - Telefone e Internet", tipo: "sga_adm", pai: "Despesas Administrativas" },
+            "4.2.1.03.007": { nome: "4.2.1.03.007 - Segurança e Vigilância Instalações", tipo: "sga_adm", pai: "Despesas Administrativas" },
+            "4.2.1.07.003": { nome: "4.2.1.07.003 - Material de Expediente e Escritório", tipo: "sga_adm", pai: "Despesas Administrativas" },
+            "4.2.1.07.010": { nome: "4.2.1.07.010 - Assessoria e Consultoria em Gestão", tipo: "sga_adm", pai: "Despesas Administrativas" },
+            "4.2.1.07.012": { nome: "4.2.1.07.012 - Assessoria e Consultoria TI", tipo: "sga_adm", pai: "Despesas Administrativas" },
 
-            // Tributárias
-            "4.2.1.08.017": { nome: "4.2.1.08.017-FUMACOP - Repasse Fundo Combate à Pobreza", tipo: "sga_tributaria", pai: "Despesas Tributárias" },
+            // SG&A - Tributárias
+            "4.2.1.08.017": { nome: "4.2.1.08.017 - FUMACOP - Fundo Combate à Pobreza", tipo: "sga_tributaria", pai: "Despesas Tributárias" },
 
             // Outras
-            "3.1.7.03.002": { nome: "3.1.7.03.002-Recuperações de Despesas", tipo: "outras_rec", pai: "Outras Receitas Operacionais" },
-            "4.3.1.01.003": { nome: "4.3.1.01.003-Descontos obtidos", tipo: "outras_rec", pai: "Outras Receitas Operacionais" }
+            "3.1.7.03.002": { nome: "3.1.7.03.002 - Recuperações de Despesas", tipo: "outras_rec", pai: "Outras Receitas" },
+            "4.3.1.01.003": { nome: "4.3.1.01.003 - Descontos obtidos", tipo: "outras_rec", pai: "Outras Receitas" }
         };
 
+        // Dados de Lançamentos Salvos (Local Storage)
         let lancamentos = JSON.parse(localStorage.getItem('dre_lancamentos')) || [
-            { id: 1, conta: "3.1.1.01.001", valor: 10950856.90, desc: "Faturamento Anual Inicial" },
-            { id: 2, conta: "3.1.3.01.002", valor: 148077.62, desc: "PIS Apurado" },
-            { id: 3, conta: "3.1.3.01.001", valor: 440407.30, desc: "ICMS Apurado" },
-            { id: 4, conta: "3.1.3.01.003", valor: 683805.96, desc: "COFINS Apurado" },
-            { id: 5, conta: "4.1.1.01.001", valor: 7419766.91, desc: "CMV Anual" },
-            { id: 6, conta: "4.2.1.02.001", valor: 102175.38, desc: "Salários" },
-            { id: 7, conta: "4.2.1.01.008", valor: 294766.58, desc: "iFood" },
-            { id: 8, conta: "4.2.1.01.115", valor: 586760.85, desc: "Frete Clientes" }
+            { conta: "3.1.1.01.001", valor: 10950856.90, desc: "Faturamento Anual Bruto" },
+            { conta: "3.1.3.01.002", valor: 148077.62, desc: "PIS Apurado" },
+            { conta: "3.1.3.01.001", valor: 440407.30, desc: "ICMS Apurado" },
+            { conta: "3.1.3.01.003", valor: 683805.96, desc: "COFINS Apurado" },
+            { conta: "4.1.1.01.001", valor: 7419766.91, desc: "CMV Total" },
+            { conta: "4.2.1.02.001", valor: 102175.38, desc: "Salários" },
+            { conta: "4.2.1.02.002", valor: 33033.53, desc: "INSS" },
+            { conta: "4.2.1.01.002", valor: 45000.00, desc: "Gastos com embalagens" },
+            { conta: "4.2.1.01.006", valor: 12500.00, desc: "Viagens comerciais" }
         ];
-
-        function toggleAdminModal() {
-            const modal = document.getElementById('admin-modal');
-            modal.classList.toggle('hidden');
-            renderizarLancamentosRecentes();
-        }
 
         function formatarMoeda(valor) {
             return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -229,128 +224,184 @@
             return valor.toFixed(2).replace('.', ',') + '%';
         }
 
+        function toggleAdminModal() {
+            const modal = document.getElementById('admin-modal');
+            modal.classList.toggle('hidden');
+            renderizarLancamentosRecentes();
+        }
+
         function adicionarLancamento() {
             const conta = document.getElementById('lanc-conta').value;
             const valor = parseFloat(document.getElementById('lanc-valor').value);
-            const desc = document.getElementById('lanc-desc').value;
+            const desc = document.getElementById('lanc-desc').value || estruturaContas[conta].nome;
 
             if (isNaN(valor) || valor <= 0) {
                 alert('Por favor, informe um valor válido.');
                 return;
             }
 
-            lancamentos.push({ id: Date.now(), conta, valor, desc: desc || 'Lançamento manual' });
+            lancamentos.push({ conta, valor, desc });
             localStorage.setItem('dre_lancamentos', JSON.stringify(lancamentos));
-            
+
             document.getElementById('lanc-valor').value = '';
             document.getElementById('lanc-desc').value = '';
+
+            calcularEAtualizarDRE();
             toggleAdminModal();
-            calcularEExibirDRE();
+        }
+
+        function removerLancamento(index) {
+            lancamentos.splice(index, 1);
+            localStorage.setItem('dre_lancamentos', JSON.stringify(lancamentos));
+            renderizarLancamentosRecentes();
+            calcularEAtualizarDRE();
         }
 
         function renderizarLancamentosRecentes() {
             const container = document.getElementById('lista-lancamentos-recentes');
             container.innerHTML = '';
-            [...lancamentos].reverse().slice(0, 5).forEach(l => {
-                const infoConta = estruturaContas[l.conta] ? estruturaContas[l.conta].nome : l.conta;
-                container.innerHTML += `<div class="flex justify-between items-center bg-white p-2 rounded border border-slate-200">
-                    <span class="truncate max-w-[200px]" title="${infoConta}">${infoConta}</span>
-                    <span class="font-semibold text-slate-800">${formatarMoeda(l.valor)}</span>
-                </div>`;
+            if (lancamentos.length === 0) {
+                container.innerHTML = '<p class="text-slate-400">Nenhum lançamento registrado.</p>';
+                return;
+            }
+            lancamentos.slice().reverse().forEach((l, idx) => {
+                const realIdx = lancamentos.length - 1 - idx;
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center bg-white p-2 rounded border border-slate-200';
+                div.innerHTML = `<span><strong>${l.conta}</strong>: ${formatarMoeda(l.valor)} (${l.desc})</span>
+                                 <button onclick="removerLancamento(${realIdx})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>`;
+                container.appendChild(div);
             });
         }
 
-        function calcularEExibirDRE() {
-            // Agrupar somatórios por conta
-            let totaisContas = {};
-            Object.keys(estruturaContas).forEach(k => totaisContas[k] = 0);
+        function calcularEAtualizarDRE() {
+            let totaisPorConta = {};
+            Object.keys(estruturaContas).forEach(c => totaisPorConta[c] = 0);
 
             lancamentos.forEach(l => {
-                if (totaisContas[l.conta] !== undefined) {
-                    totaisContas[l.conta] += l.valor;
+                if (totaisPorConta[l.conta] !== undefined) {
+                    totaisPorConta[l.conta] += l.valor;
                 }
             });
 
-            // Cálculos sintéticos
-            let recBruta = totaisContas["3.1.1.01.001"];
-            let pis = totaisContas["3.1.3.01.002"];
-            let icms = totaisContas["3.1.3.01.001"];
-            let cofins = totaisContas["3.1.3.01.003"];
-            let totalImpostos = pis + icms + cofins;
-            
-            let recLiquida = recBruta - totalImpostos;
-            let baseAV = recLiquida !== 0 ? recLiquida : 1; // Evita divisão por zero
+            // Totais por grupo
+            let recBruta = 0, impostos = 0, cmv = 0;
+            let sgaPessoal = 0, sgaComercial = 0, sgaAdm = 0, sgaTributaria = 0;
 
-            let cmv = totaisContas["4.1.1.01.001"];
+            Object.keys(totaisPorConta).forEach(conta => {
+                let val = totaisPorConta[conta];
+                let info = estruturaContas[conta];
+                if (info.tipo === 'rec_bruta') recBruta += val;
+                if (info.tipo === 'imposto') impostos += val;
+                if (info.tipo === 'cmv') cmv += val;
+                if (info.tipo === 'sga_pessoal') sgaPessoal += val;
+                if (info.tipo === 'sga_comercial') sgaComercial += val;
+                if (info.tipo === 'sga_adm') sgaAdm += val;
+                if (info.tipo === 'sga_tributaria') sgaTributaria += val;
+            });
+
+            let recLiquida = recBruta - impostos;
             let lucroBruto = recLiquida - cmv;
+            let totalSga = sgaPessoal + sgaComercial + sgaAdm + sgaTributaria;
+            let ebitda = lucroBruto - totalSga;
 
-            // SG&A Subtotais
-            let sgaPessoal = ["4.2.1.02.001","4.2.1.02.002","4.2.1.02.003","4.2.1.02.004","4.2.1.02.005","4.2.1.02.008","4.2.1.02.009","4.2.1.02.010","4.2.1.02.016","4.2.1.02.018"]
-                .reduce((acc, k) => acc + totaisContas[k], 0);
-
-            let sgaComercial = ["4.2.1.01.002","4.2.1.01.006","4.2.1.01.008","4.2.1.01.115","4.2.1.01.119","4.2.1.01.121","4.2.1.06.005","4.2.1.06.009","4.2.1.09.007","4.3.1.02.001"]
-                .reduce((acc, k) => acc + totaisContas[k], 0);
-
-            let sgaAdmin = ["4.2.1.03.003","4.2.1.03.007","4.2.1.07.003","4.2.1.07.010","4.2.1.07.012"]
-                .reduce((acc, k) => acc + totaisContas[k], 0);
-
-            let sgaTributaria = totaisContas["4.2.1.08.017"];
-            let totalSGA = sgaPessoal + sgaComercial + sgaAdmin + sgaTributaria;
-
-            let outrasRecDesp = totaisContas["3.1.7.03.002"] + totaisContas["4.3.1.01.003"];
-
-            let ebitda = lucroBruto - totalSGA + outrasRecDesp;
-
-            // Atualizar Cards no Topo
+            // Atualizar Cards Superiores
             document.getElementById('card-rec-bruta').innerText = formatarMoeda(recBruta);
             document.getElementById('card-rec-liq').innerText = formatarMoeda(recLiquida);
             document.getElementById('card-lucro-bruto').innerText = formatarMoeda(lucroBruto);
             document.getElementById('card-ebitda').innerText = formatarMoeda(ebitda);
 
-            // Montar Tabela HTML
+            // Montar Tabela Analítica
             const tbody = document.getElementById('dre-table-body');
             tbody.innerHTML = '';
 
-            function adicionarLinha(titulo, valor, av, ehSintetico = false, corDestaque = '') {
-                const classeTr = ehSintetico ? 'bg-slate-50 font-bold text-slate-900 border-t border-b border-slate-200' : 'hover:bg-slate-50/50';
-                const corTexto = corDestaque ? corDestaque : '';
-                tbody.innerHTML += `
-                    <tr class="${classeTr}">
-                        <td class="py-2.5 px-6 ${ehSintetico ? 'pl-6' : 'pl-10'}">${titulo}</td>
-                        <td class="py-2.5 px-6 text-right ${corTexto}">${formatarMoeda(valor)}</td>
-                        <td class="py-2.5 px-6 text-right ${corTexto}">${formatarPercentual(av)}</td>
-                    </tr>
+            const baseAV = recLiquida > 0 ? recLiquida : 1;
+
+            function adicionarLinha(nome, valor, isHeader = false, isSubtotal = false, indent = false) {
+                let av = (valor / baseAV) * 100;
+                let tr = document.createElement('tr');
+                
+                if (isHeader) {
+                    tr.className = 'bg-slate-100 font-bold text-slate-900';
+                } else if (isSubtotal) {
+                    tr.className = 'bg-slate-50 font-semibold text-slate-800 border-t border-b border-slate-200';
+                } else {
+                    tr.className = 'hover:bg-slate-50/80 transition';
+                }
+
+                let paddingClass = indent ? 'pl-10 pr-6 py-2.5 text-xs text-slate-600' : 'px-6 py-2.5';
+                
+                tr.innerHTML = `
+                    <td class="${paddingClass}">${nome}</td>
+                    <td class="py-2.5 px-6 text-right font-medium">${formatarMoeda(valor)}</td>
+                    <td class="py-2.5 px-6 text-right text-slate-500">${formatarPercentual(av)}</td>
                 `;
+                tbody.appendChild(tr);
             }
 
-            adicionarLinha("Receita Bruta", recBruta, (recBruta / baseAV) * 100, true);
-            adicionarLinha("Receita com Revenda de Mercadorias", recBruta, (recBruta / baseAV) * 100);
-            
-            adicionarLinha("Impostos S/ Vendas (-)", -totalImpostos, (-totalImpostos / baseAV) * 100, true, "text-red-600");
-            adicionarLinha("PIS", -pis, (-pis / baseAV) * 100, false, "text-red-600");
-            adicionarLinha("ICMS", -icms, (-icms / baseAV) * 100, false, "text-red-600");
-            adicionarLinha("COFINS", -cofins, (-cofins / baseAV) * 100, false, "text-red-600");
+            // 1. Receita Bruta
+            adicionarLinha("Receita Bruta Total", recBruta, true);
+            adicionarLinha(estruturaContas["3.1.1.01.001"].nome, totaisPorConta["3.1.1.01.001"], false, false, true);
 
-            adicionarLinha("Receita Líquida", recLiquida, 100.00, true, "text-blue-600");
+            // 2. Impostos
+            adicionarLinha("(-) Impostos sobre Vendas", impostos, true);
+            adicionarLinha(estruturaContas["3.1.3.01.002"].nome, totaisPorConta["3.1.3.01.002"], false, false, true);
+            adicionarLinha(estruturaContas["3.1.3.01.001"].nome, totaisPorConta["3.1.3.01.001"], false, false, true);
+            adicionarLinha(estruturaContas["3.1.3.01.003"].nome, totaisPorConta["3.1.3.01.003"], false, false, true);
 
-            adicionarLinha("CMV & CSP (-)", -cmv, (-cmv / baseAV) * 100, true, "text-red-600");
-            adicionarLinha("Custo das Mercadorias Vendidas", -cmv, (-cmv / baseAV) * 100, false, "text-red-600");
+            // Receita Líquida
+            adicionarLinha("(=) Receita Líquida", recLiquida, false, true);
 
-            adicionarLinha("Lucro Bruto", lucroBruto, (lucroBruto / baseAV) * 100, true, "text-emerald-600");
-            adicionarLinha("Lucro Bruto Ajustado", lucroBruto, (lucroBruto / baseAV) * 100, true, "text-emerald-600");
+            // 3. CMV
+            adicionarLinha("(-) Custo das Mercadorias Vendidas (CMV)", cmv, true);
+            adicionarLinha(estruturaContas["4.1.1.01.001"].nome, totaisPorConta["4.1.1.01.001"], false, false, true);
 
-            adicionarLinha("SG&A (-)", -totalSGA, (-totalSGA / baseAV) * 100, true, "text-red-600");
-            adicionarLinha("Gastos com Pessoal - SG&A", -sgaPessoal, (-sgaPessoal / baseAV) * 100, false, "text-red-600");
-            adicionarLinha("Despesas Comerciais", -sgaComercial, (-sgaComercial / baseAV) * 100, false, "text-red-600");
-            adicionarLinha("Despesas Administrativas", -sgaAdmin, (-sgaAdmin / baseAV) * 100, false, "text-red-600");
-            adicionarLinha("Despesas Tributárias", -sgaTributaria, (-sgaTributaria / baseAV) * 100, false, "text-red-600");
+            // Lucro Bruto
+            adicionarLinha("(=) Lucro Bruto", lucroBruto, false, true);
 
-            adicionarLinha("Outras Receitas/Despesas Operacionais", outrasRecDesp, (outrasRecDesp / baseAV) * 100, true);
-            adicionarLinha("EBITDA", ebitda, (ebitda / baseAV) * 100, true, "text-indigo-600 text-base");
+            // 4. Despesas SG&A Detalhadas por Contas Analíticas
+            adicionarLinha("(-) Despesas Operacionais (SG&A)", totalSga, true);
+
+            // Pessoal
+            adicionarLinha("Gastos com Pessoal", sgaPessoal, false, true, true);
+            Object.keys(totaisPorConta).forEach(conta => {
+                if (estruturaContas[conta].tipo === 'sga_pessoal' && totaisPorConta[conta] > 0) {
+                    adicionarLinha(estruturaContas[conta].nome, totaisPorConta[conta], false, false, true);
+                }
+            });
+
+            // Comerciais (Aqui entram Embalagens e Viagens detalhadas)
+            adicionarLinha("Despesas Comerciais", sgaComercial, false, true, true);
+            Object.keys(totaisPorConta).forEach(conta => {
+                if (estruturaContas[conta].tipo === 'sga_comercial' && totaisPorConta[conta] > 0) {
+                    adicionarLinha(estruturaContas[conta].nome, totaisPorConta[conta], false, false, true);
+                }
+            });
+
+            // Administrativas
+            adicionarLinha("Despesas Administrativas", sgaAdm, false, true, true);
+            Object.keys(totaisPorConta).forEach(conta => {
+                if (estruturaContas[conta].tipo === 'sga_adm' && totaisPorConta[conta] > 0) {
+                    adicionarLinha(estruturaContas[conta].nome, totaisPorConta[conta], false, false, true);
+                }
+            });
+
+            // Tributárias
+            if (sgaTributaria > 0) {
+                adicionarLinha("Despesas Tributárias", sgaTributaria, false, true, true);
+                Object.keys(totaisPorConta).forEach(conta => {
+                    if (estruturaContas[conta].tipo === 'sga_tributaria' && totaisPorConta[conta] > 0) {
+                        adicionarLinha(estruturaContas[conta].nome, totaisPorConta[conta], false, false, true);
+                    }
+                });
+            }
+
+            // EBITDA
+            adicionarLinha("(=) EBITDA", ebitda, false, true);
         }
 
-        // Executar ao carregar
-        calcularEExibirDRE();
+        // Executar carregamento inicial
+        calcularEAtualizarDRE();
     </script>
 </body>
 </html>
