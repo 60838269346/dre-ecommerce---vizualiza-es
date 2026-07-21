@@ -18,7 +18,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-bold tracking-tight">DRE & Análise Vertical</h1>
-                    <p class="text-xs text-slate-400">Visão Sintética Consolidada</p>
+                    <p class="text-xs text-slate-400">Visão Sintética Completa</p>
                 </div>
             </div>
             <div class="flex items-center space-x-3">
@@ -135,7 +135,7 @@
             "4.2.1.01.002": { nome: "Gastos com embalagens", tipo: "sga_comercial" },
             "4.2.1.01.006": { nome: "Viagens e estadias comerciais", tipo: "sga_comercial" },
             "4.2.1.01.008": { nome: "Comissão iFood", tipo: "sga_comercial" },
-            "4.2.1.01.115": { nome: "Frete Entrega Cliente", tipo: "sga_comercial" },
+            "4.2.1.01.115": { nome: "Frete Entrega Cliente", tipo: "sga_distribuicao" },
             "4.2.1.01.119": { nome: "Chargeback", tipo: "sga_comercial" },
             "4.2.1.01.121": { nome: "Licenciamento APP", tipo: "sga_comercial" },
             "4.2.1.06.005": { nome: "Assessorias de Marketing", tipo: "sga_comercial" },
@@ -147,7 +147,9 @@
             "4.2.1.07.003": { nome: "Material de Expediente", tipo: "sga_adm" },
             "4.2.1.07.010": { nome: "Assessoria e Consultoria em Gestão", tipo: "sga_adm" },
             "4.2.1.07.012": { nome: "Assessoria e Consultoria TI", tipo: "sga_adm" },
-            "4.2.1.08.017": { nome: "FUMACOP", tipo: "sga_tributaria" }
+            "4.2.1.08.017": { nome: "FUMACOP", tipo: "sga_tributaria" },
+            "3.2.1.01.001": { nome: "Outras Receitas Operacionais", tipo: "outras_rec_op" },
+            "4.5.1.01.001": { nome: "Outras Despesas Operacionais", tipo: "outras_desp_op" }
         };
 
         let lancamentos = JSON.parse(localStorage.getItem('dre_lancamentos')) || [
@@ -255,7 +257,8 @@
             });
 
             let recBruta = 0, impostos = 0, cmv = 0;
-            let sgaPessoal = 0, sgaComercial = 0, sgaAdm = 0, sgaTributaria = 0;
+            let sgaPessoal = 0, sgaComercial = 0, sgaAdm = 0, sgaDistribuicao = 0, sgaTributaria = 0;
+            let outrasRecOp = 0, outrasDespOp = 0;
 
             Object.keys(totaisPorConta).forEach(conta => {
                 let val = totaisPorConta[conta];
@@ -266,12 +269,15 @@
                 if (info.tipo === 'sga_pessoal') sgaPessoal += val;
                 if (info.tipo === 'sga_comercial') sgaComercial += val;
                 if (info.tipo === 'sga_adm') sgaAdm += val;
+                if (info.tipo === 'sga_distribuicao') sgaDistribuicao += val;
                 if (info.tipo === 'sga_tributaria') sgaTributaria += val;
+                if (info.tipo === 'outras_rec_op') outrasRecOp += val;
+                if (info.tipo === 'outras_desp_op') outrasDespOp += val;
             });
 
             let recLiquida = recBruta - impostos;
             let lucroBruto = recLiquida - cmv;
-            let totalSga = sgaPessoal + sgaComercial + sgaAdm + sgaTributaria;
+            let totalSga = sgaPessoal + sgaComercial + sgaAdm + sgaDistribuicao + sgaTributaria + outrasDespOp - outrasRecOp;
             let ebitda = lucroBruto - totalSga;
 
             document.getElementById('card-rec-bruta').innerText = formatarMoeda(recBruta);
@@ -304,7 +310,7 @@
                 tbody.appendChild(tr);
             }
 
-            // Exibir apenas contas e totalizações sintéticas consolidadas
+            // Exibir a DRE Sintética Completa
             adicionarLinha("Receita Bruta Total", recBruta, true);
             adicionarLinha("(-) Impostos sobre Vendas", impostos, false, false);
             adicionarLinha("(=) Receita Líquida", recLiquida, false, true);
@@ -315,8 +321,11 @@
             adicionarLinha("(-) Despesas Operacionais (SG&A)", totalSga, true);
             adicionarLinha("    • Despesas com Pessoal", sgaPessoal, false, false);
             adicionarLinha("    • Despesas Comerciais e Operacionais", sgaComercial, false, false);
+            adicionarLinha("    • Despesas com Distribuição e Fretes", sgaDistribuicao, false, false);
             adicionarLinha("    • Despesas Administrativas", sgaAdm, false, false);
-            if(sgaTributaria > 0) adicionarLinha("    • Despesas Tributárias", sgaTributaria, false, false);
+            adicionarLinha("    • Despesas Tributárias", sgaTributaria, false, false);
+            if(outrasDespOp > 0) adicionarLinha("    • Outras Despesas Operacionais", outrasDespOp, false, false);
+            if(outrasRecOp > 0) adicionarLinha("    (+) Outras Receitas Operacionais", outrasRecOp, false, false);
 
             adicionarLinha("(=) EBITDA", ebitda, false, true);
         }
