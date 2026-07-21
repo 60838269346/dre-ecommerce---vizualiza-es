@@ -4,36 +4,63 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DRE - Demonstração do Resultado do Exercício com Análise Vertical</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <!-- Chart.js para Gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Bibliotecas de Exportação (SheetJS e jsPDF) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans">
 
     <!-- Cabeçalho -->
     <header class="bg-slate-900 text-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
-            <div class="flex items-center space-x-3 mb-3 md:mb-0">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
                 <div class="bg-emerald-600 p-2.5 rounded-lg text-white">
                     <i class="fa-solid fa-chart-line text-xl"></i>
                 </div>
                 <div>
                     <h1 class="text-xl font-bold tracking-tight">DRE & Análise Vertical</h1>
-                    <p class="text-xs text-slate-400">Visão Sintética Completa</p>
+                    <p class="text-xs text-slate-400">E-commerce - Gestão Sintética e Gráfica</p>
                 </div>
             </div>
-            <div class="flex items-center space-x-3">
+
+            <!-- Controles de Filtro e Ações -->
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Filtro por Período (Mês/Ano) -->
+                <div class="flex items-center bg-slate-800 rounded-lg p-1 border border-slate-700">
+                    <span class="text-xs text-slate-400 px-2"><i class="fa-solid fa-calendar mr-1"></i> Período:</span>
+                    <select id="filtro-periodo" onchange="calcularEAtualizarDRE()" class="bg-slate-900 text-white text-xs font-medium rounded px-2 py-1.5 focus:outline-none">
+                        <option value="todos">Todos os Períodos (Consolidado)</option>
+                    </select>
+                </div>
+
+                <!-- Botões de Exportação -->
+                <div class="flex items-center space-x-2">
+                    <button onclick="exportarExcel()" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 px-3 py-2 rounded-lg text-xs font-medium transition flex items-center space-x-1.5" title="Exportar para Excel">
+                        <i class="fa-solid fa-file-excel"></i> <span>Excel</span>
+                    </button>
+                    <button onclick="exportarPDF()" class="bg-slate-800 hover:bg-slate-700 text-rose-400 border border-slate-700 px-3 py-2 rounded-lg text-xs font-medium transition flex items-center space-x-1.5" title="Exportar para PDF">
+                        <i class="fa-solid fa-file-pdf"></i> <span>PDF</span>
+                    </button>
+                </div>
+
                 <button onclick="toggleAdminModal()" id="btn-admin" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm flex items-center space-x-2">
-                    <i class="fa-solid fa-plus-circle"></i>
-                    <span>Novo Lançamento</span>
+                    <i class="fa-solid fa-plus-circle"></i> <span>Novo Lançamento</span>
                 </button>
             </div>
         </div>
     </header>
 
     <!-- Conteúdo Principal -->
-    <main class="max-w-7xl mx-auto px-4 py-8">
-        <!-- Filtros e Resumo Rápido -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <main class="max-w-7xl mx-auto px-4 py-8 space-y-6">
+
+        <!-- Cards de Resumo Rápido -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
                 <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Receita Bruta</p>
                 <p id="card-rec-bruta" class="text-xl font-bold text-slate-900 mt-1">R$ 0,00</p>
@@ -49,6 +76,26 @@
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
                 <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">EBITDA</p>
                 <p id="card-ebitda" class="text-xl font-bold text-indigo-600 mt-1">R$ 0,00</p>
+            </div>
+        </div>
+
+        <!-- Seção de Gráficos de Desempenho Visual -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="font-bold text-sm text-slate-800 mb-4 flex items-center">
+                    <i class="fa-solid fa-chart-bar text-emerald-600 mr-2"></i> Evolução dos Indicadores Chave
+                </h3>
+                <div class="relative h-64">
+                    <canvas id="chartIndicadores"></canvas>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="font-bold text-sm text-slate-800 mb-4 flex items-center">
+                    <i class="fa-solid fa-chart-pie text-indigo-600 mr-2"></i> Composição das Despesas (Análise Vertical)
+                </h3>
+                <div class="relative h-64 flex justify-center">
+                    <canvas id="chartDespesas"></canvas>
+                </div>
             </div>
         </div>
 
@@ -73,6 +120,7 @@
                 </table>
             </div>
         </div>
+
     </main>
 
     <!-- Modal de Lançamentos -->
@@ -83,10 +131,33 @@
                 <button onclick="toggleAdminModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Mês de Competência</label>
+                        <select id="lanc-mes" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <option value="01">Janeiro</option>
+                            <option value="02">Fevereiro</option>
+                            <option value="03">Março</option>
+                            <option value="04">Abril</option>
+                            <option value="05">Maio</option>
+                            <option value="06">Junho</option>
+                            <option value="07">Julho</option>
+                            <option value="08">Agosto</option>
+                            <option value="09">Setembro</option>
+                            <option value="10">Outubro</option>
+                            <option value="11">Novembro</option>
+                            <option value="12">Dezembro</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Ano</label>
+                        <input type="number" id="lanc-ano" value="2026" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Selecione a Conta</label>
                     <select id="lanc-conta" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                        <!-- Preenchido dinamicamente via JS -->
+                        <!-- Preenchido dinamicamente -->
                     </select>
                 </div>
                 <div>
@@ -154,29 +225,17 @@
         };
 
         let lancamentos = JSON.parse(localStorage.getItem('dre_lancamentos')) || [
-            { conta: "3.1.1.01.001", valor: 10950856.90, desc: "Receita com revenda" },
-            { conta: "3.1.3.01.001", valor: 440407.30, desc: "ICMS" },
-            { conta: "3.1.3.01.002", valor: 148077.62, desc: "PIS" },
-            { conta: "3.1.3.01.003", valor: 683805.96, desc: "COFINS" },
-            { conta: "4.1.1.01.001", valor: 7419766.91, desc: "CMV" },
-            { conta: "4.2.1.02.001", valor: 102175.38, desc: "Salários" },
-            { conta: "4.2.1.02.002", valor: 33033.53, desc: "INSS" },
-            { conta: "4.2.1.02.003", valor: 9170.29, desc: "FGTS" },
-            { conta: "4.2.1.02.004", valor: 7138.19, desc: "13 Salário" },
-            { conta: "4.2.1.02.005", valor: 10986.43, desc: "Férias" },
-            { conta: "4.2.1.02.008", valor: 9343.86, desc: "Alimentação" },
-            { conta: "4.2.1.02.009", valor: 973.69, desc: "VT" },
-            { conta: "4.2.1.02.010", valor: 3910.84, desc: "Plano de Saúde" },
-            { conta: "4.2.1.02.011", valor: 120.00, desc: "SSMT" },
-            { conta: "4.2.1.02.012", valor: 42.51, desc: "Seguro de vida" },
-            { conta: "4.2.1.02.014", valor: 300.00, desc: "Premiações" },
-            { conta: "4.2.1.02.015", valor: 483.76, desc: "Gympass" },
-            { conta: "4.2.1.02.016", valor: 2400.00, desc: "Produtividade" },
-            { conta: "4.2.1.02.018", valor: 1634.82, desc: "Ajuda de Custo" },
-            { conta: "4.2.1.02.019", valor: 5648.00, desc: "Outras gratificações" },
-            { conta: "4.2.1.01.002", valor: 45000.00, desc: "Embalagens" },
-            { conta: "4.2.1.01.006", valor: 12500.00, desc: "Viagens" }
+            { conta: "3.1.1.01.001", valor: 10950856.90, desc: "Receita com revenda", mes: "01", ano: "2026" },
+            { conta: "3.1.3.01.001", valor: 440407.30, desc: "ICMS", mes: "01", ano: "2026" },
+            { conta: "3.1.3.01.002", valor: 148077.62, desc: "PIS", mes: "01", ano: "2026" },
+            { conta: "3.1.3.01.003", valor: 683805.96, desc: "COFINS", mes: "01", ano: "2026" },
+            { conta: "4.1.1.01.001", valor: 7419766.91, desc: "CMV", mes: "01", ano: "2026" },
+            { conta: "4.2.1.02.001", valor: 102175.38, desc: "Salários", mes: "01", ano: "2026" },
+            { conta: "4.2.1.01.002", valor: 45000.00, desc: "Embalagens", mes: "01", ano: "2026" }
         ];
+
+        let chartIndicadores = null;
+        let chartDespesas = null;
 
         function popularSelectContas() {
             const select = document.getElementById('lanc-conta');
@@ -187,6 +246,30 @@
                 opt.innerText = estruturaContas[codigo].nome;
                 select.appendChild(opt);
             });
+        }
+
+        function popularFiltroPeriodos() {
+            const select = document.getElementById('filtro-periodo');
+            const valorAtual = select.value;
+            
+            let periodosSet = new Set();
+            lancamentos.forEach(l => {
+                if(l.mes && l.ano) periodosSet.add(`${l.ano}-${l.mes}`);
+            });
+
+            select.innerHTML = '<option value="todos">Todos os Períodos (Consolidado)</option>';
+            Array.from(periodosSet).sort().forEach(p => {
+                let [ano, mes] = p.split('-');
+                let nomesMeses = {"01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril", "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto", "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro"};
+                let opt = document.createElement('option');
+                opt.value = p;
+                opt.innerText = `${nomesMeses[mes]} / ${ano}`;
+                select.appendChild(opt);
+            });
+
+            if(select.querySelector(`option[value="${valorAtual}"]`)) {
+                select.value = valorAtual;
+            }
         }
 
         function formatarMoeda(valor) {
@@ -204,6 +287,8 @@
         }
 
         function adicionarLancamento() {
+            const mes = document.getElementById('lanc-mes').value;
+            const ano = document.getElementById('lanc-ano').value;
             const conta = document.getElementById('lanc-conta').value;
             const valor = parseFloat(document.getElementById('lanc-valor').value);
             const desc = document.getElementById('lanc-desc').value || estruturaContas[conta].nome;
@@ -213,12 +298,13 @@
                 return;
             }
 
-            lancamentos.push({ conta, valor, desc });
+            lancamentos.push({ conta, valor, desc, mes, ano });
             localStorage.setItem('dre_lancamentos', JSON.stringify(lancamentos));
-
+            
             document.getElementById('lanc-valor').value = '';
             document.getElementById('lanc-desc').value = '';
-
+            
+            popularFiltroPeriodos();
             calcularEAtualizarDRE();
             toggleAdminModal();
         }
@@ -226,6 +312,7 @@
         function removerLancamento(index) {
             lancamentos.splice(index, 1);
             localStorage.setItem('dre_lancamentos', JSON.stringify(lancamentos));
+            popularFiltroPeriodos();
             renderizarLancamentosRecentes();
             calcularEAtualizarDRE();
         }
@@ -241,19 +328,26 @@
                 const realIdx = lancamentos.length - 1 - idx;
                 const div = document.createElement('div');
                 div.className = 'flex justify-between items-center bg-white p-2 rounded border border-slate-200';
-                div.innerHTML = `<span><strong>${l.conta}</strong>: ${formatarMoeda(l.valor)} (${l.desc})</span>
-                                 <button onclick="removerLancamento(${realIdx})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>`;
+                div.innerHTML = `<span><strong>${l.mes}/${l.ano} - ${l.conta}</strong>: ${formatarMoeda(l.valor)}</span> <button onclick="removerLancamento(${realIdx})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>`;
                 container.appendChild(div);
             });
         }
 
         function calcularEAtualizarDRE() {
+            const periodoSelecionado = document.getElementById('filtro-periodo').value;
+
             let totaisPorConta = {};
             Object.keys(estruturaContas).forEach(c => totaisPorConta[c] = 0);
 
             lancamentos.forEach(l => {
-                if (totaisPorConta[l.conta] !== undefined) {
-                    totaisPorConta[l.conta] += l.valor;
+                let lMes = l.mes || "01";
+                let lAno = l.ano || "2026";
+                let lPeriodo = `${lAno}-${lMes}`;
+
+                if (periodoSelecionado === 'todos' || lPeriodo === periodoSelecionado) {
+                    if (totaisPorConta[l.conta] !== undefined) {
+                        totaisPorConta[l.conta] += l.valor;
+                    }
                 }
             });
 
@@ -289,13 +383,11 @@
 
             const tbody = document.getElementById('dre-table-body');
             tbody.innerHTML = '';
-
             const baseAV = recLiquida > 0 ? recLiquida : 1;
 
             function adicionarLinha(nome, valor, isHeader = false, isSubtotal = false) {
                 let av = (valor / baseAV) * 100;
                 let tr = document.createElement('tr');
-                
                 if (isHeader) {
                     tr.className = 'bg-slate-100 font-bold text-slate-900';
                 } else if (isSubtotal) {
@@ -303,7 +395,6 @@
                 } else {
                     tr.className = 'hover:bg-slate-50/80 transition';
                 }
-
                 tr.innerHTML = `
                     <td class="px-6 py-3">${nome}</td>
                     <td class="py-3 px-6 text-right font-medium">${formatarMoeda(valor)}</td>
@@ -312,28 +403,108 @@
                 tbody.appendChild(tr);
             }
 
-            // Exibir a DRE Sintética Completa com Outras Receitas/Despesas Operacionais
             adicionarLinha("Receita Bruta Total", recBruta, true);
             adicionarLinha("(-) Impostos sobre Vendas", impostos, false, false);
             adicionarLinha("(=) Receita Líquida", recLiquida, false, true);
-            
             adicionarLinha("(-) Custo das Mercadorias Vendidas (CMV)", cmv, true);
             adicionarLinha("(=) Lucro Bruto", lucroBruto, false, true);
-
             adicionarLinha("(-) Despesas Operacionais (SG&A)", totalSga, true);
             adicionarLinha("    • Gastos com Pessoal", sgaPessoal, false, false);
-            adicionarLinha("    • Despesas Comerciais ", sgaComercial, false, false);
-            adicionarLinha("    • Despesas com Manut de equipamentos e Fretes", sgaDistribuicao, false, false);
+            adicionarLinha("    • Despesas Comerciais", sgaComercial, false, false);
+            adicionarLinha("    • Despesas com Manut e Fretes", sgaDistribuicao, false, false);
             adicionarLinha("    • Despesas Administrativas", sgaAdm, false, false);
             adicionarLinha("    • Despesas Tributárias", sgaTributaria, false, false);
-            if(outrasDespOp > 0) adicionarLinha("    • Outras Despesas Operacionais", outrasDespOp, false, false);
-            if(outrasRecOp > 0) adicionarLinha("    • Outras Receitas Operacionais", outrasRecOp, false, false);
-            if(outrasRecDespOp !== 0) adicionarLinha("    • Outras Receitas / Despesas Operacionais", outrasRecDespOp, false, false);
+            
+            atualizarGraficos(recLiquida, lucroBruto, ebitda, { sgaPessoal, sgaComercial, sgaDistribuicao, sgaAdm, sgaTributaria });
+        }
 
-            adicionarLinha("(=) EBITDA", ebitda, false, true);
+        function atualizarGraficos(recLiq, lucroBruto, ebitda, despesas) {
+            const ctxInd = document.getElementById('chartIndicadores').getContext('2d');
+            if (chartIndicadores) chartIndicadores.destroy();
+            chartIndicadores = new Chart(ctxInd, {
+                type: 'bar',
+                data: {
+                    labels: ['Rec. Líquida', 'Lucro Bruto', 'EBITDA'],
+                    datasets: [{
+                        label: 'Valor (R$)',
+                        data: [recLiq, lucroBruto, ebitda],
+                        backgroundColor: ['#2563eb', '#059669', '#4f46e5'],
+                        borderRadius: 6
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            const ctxDesp = document.getElementById('chartDespesas').getContext('2d');
+            if (chartDespesas) chartDespesas.destroy();
+            chartDespesas = new Chart(ctxDesp, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pessoal', 'Comercial', 'Fretes/Manut.', 'Administrativa', 'Tributária'],
+                    datasets: [{
+                        data: [despesas.sgaPessoal, despesas.sgaComercial, despesas.sgaDistribuicao, despesas.sgaAdm, despesas.sgaTributaria],
+                        backgroundColor: ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        function exportarExcel() {
+            let tabela = document.getElementById('dre-table-body');
+            let wb = XLSX.utils.book_new();
+            let dados = [["Grupo / Conta Sintética", "Valor (R$)", "A.V. (%)"]];
+            
+            tabela.querySelectorAll('tr').forEach(tr => {
+                let cols = tr.querySelectorAll('td');
+                if(cols.length === 3) {
+                    dados.push([cols[0].innerText.trim(), cols[1].innerText.trim(), cols[2].innerText.trim()]);
+                }
+            });
+
+            let ws = XLSX.utils.aoa_to_sheet(dados);
+            XLSX.utils.book_append_sheet(wb, ws, "DRE Sintética");
+            XLSX.writeFile(wb, "DRE_Ecommerce.xlsx");
+        }
+
+        function exportarPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = jsPDF();
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+            doc.text("Demonstração do Resultado do Exercício (DRE)", 14, 20);
+            
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            doc.text("Relatório Sintético com Análise Vertical", 14, 26);
+
+            let y = 35;
+            doc.setFont("helvetica", "bold");
+            doc.text("Grupo / Conta", 14, y);
+            doc.text("Valor (R$)", 130, y);
+            doc.text("A.V. (%)", 175, y);
+            
+            doc.line(14, y + 2, 196, y + 2);
+            y += 8;
+
+            doc.setFont("helvetica", "normal");
+            document.querySelectorAll('#dre-table-body tr').forEach(tr => {
+                let cols = tr.querySelectorAll('td');
+                if(cols.length === 3) {
+                    if(y > 280) { doc.addPage(); y = 20; }
+                    doc.text(cols[0].innerText.trim(), 14, y);
+                    doc.text(cols[1].innerText.trim(), 130, y, { align: 'right' });
+                    doc.text(cols[2].innerText.trim(), 196, y, { align: 'right' });
+                    y += 7;
+                }
+            });
+
+            doc.save("DRE_Ecommerce.pdf");
         }
 
         popularSelectContas();
+        popularFiltroPeriodos();
         calcularEAtualizarDRE();
     </script>
 </body>
