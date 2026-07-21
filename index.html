@@ -8,6 +8,33 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Configuração padrão conectada ao projeto dre-ecommerce
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-ConfigPadraoDRE-Ecommerce",
+            authDomain: "dre-ecommerce.firebaseapp.com",
+            projectId: "dre-ecommerce",
+            storageBucket: "dre-ecommerce.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456:web:abcdef"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.db = db;
+        window.collection = collection;
+        window.getDocs = getDocs;
+        window.addDoc = addDoc;
+        
+        if (window.carregarDadosDoBanco) {
+            window.carregarDadosDoBanco();
+        }
+    </script>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans">
 
@@ -166,13 +193,13 @@
                 </div>
             </div>
             <div class="px-6 py-4 bg-slate-50 border-t border-slate-100">
-                <h4 class="text-xs font-bold text-slate-500 uppercase mb-2">Lançamentos Oficiais Fixados</h4>
+                <h4 class="text-xs font-bold text-slate-500 uppercase mb-2">Lançamentos Recentes no Banco</h4>
                 <div id="lista-lancamentos-recentes" class="max-h-32 overflow-y-auto space-y-1 text-xs text-slate-600"></div>
             </div>
         </div>
     </div>
 
-    <!-- Lógica da Aplicação -->
+    <!-- Lógica da Aplicação com Integração em Nuvem -->
     <script>
         const mesesNomes = {
             "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril",
@@ -188,12 +215,23 @@
 
         let canalAtivo = "1) IFOOD";
         let anoAtivo = "2026";
+        let lancamentos = [];
 
-        // DADOS OFICIAIS FIXOS NO CÓDIGO (Visível para todos que abrirem o link)
-        let lancamentos = [
-            { canal: "2) APP/SITE", tipo: "receita_bruta", valor: 15000, desc: "Faturamento Janeiro", mes: "01", ano: "2026" },
-            { canal: "2) APP/SITE", tipo: "impostos", valor: 1500, desc: "Impostos Janeiro", mes: "01", ano: "2026" }
-        ];
+        async function carregarDadosDoBanco() {
+            if (!window.db) return;
+            try {
+                const querySnapshot = await window.getDocs(window.collection(window.db, "lancamentos_dre"));
+                lancamentos = [];
+                querySnapshot.forEach((doc) => {
+                    lancamentos.push(doc.data());
+                });
+                calcularEAtualizarDRE();
+                renderizarLancamentosRecentes();
+            } catch (e) {
+                console.error("Erro ao carregar dados:", e);
+            }
+        }
+        window.carregarDadosDoBanco = carregarDadosDoBanco;
 
         function formatarMoeda(valor) {
             let absVal = Math.abs(valor);
@@ -233,7 +271,7 @@
             renderizarLancamentosRecentes();
         }
 
-        function adicionarLancamento() {
+        async function adicionarLancamento() {
             const mes = document.getElementById('lanc-mes').value;
             const ano = document.getElementById('lanc-ano').value;
             const canal = document.getElementById('lanc-canal').value; 
@@ -248,15 +286,26 @@
                 return;
             }
 
-            lancamentos.push({ 
+            const novoObj = { 
                 canal: String(canal).trim(), 
                 tipo: String(tipo).trim(), 
                 valor: Number(valor), 
                 desc, 
                 mes: String(mes), 
                 ano: String(ano) 
-            });
-            
+            };
+
+            if (window.db) {
+                try {
+                    await window.addDoc(window.collection(window.db, "lancamentos_dre"), novoObj);
+                    alert('Lançamento salvo com sucesso na nuvem para todo mundo ver!');
+                } catch (e) {
+                    alert('Erro ao salvar no banco de dados.');
+                    console.error(e);
+                    return;
+                }
+            }
+
             document.getElementById('lanc-valor').value = '';
             document.getElementById('lanc-desc').value = '';
             
@@ -264,10 +313,9 @@
             anoAtivo = String(ano);
             canalAtivo = String(canal);
             
+            await carregarDadosDoBanco();
             renderizarBotoesCanais();
-            calcularEAtualizarDRE();
             toggleAdminModal();
-            alert('Lançamento adicionado na sua sessão! Para torná-lo oficial para todos, copie o novo array de lançamentos gerados no código do GitHub.');
         }
 
         function renderizarLancamentosRecentes() {
@@ -277,7 +325,7 @@
                 container.innerHTML = '<p class="text-slate-400">Nenhum lançamento registrado.</p>';
                 return;
             }
-            lancamentos.slice().reverse().forEach((l, idx) => {
+            lancamentos.slice().reverse().forEach((l) => {
                 const canalObj = canais.find(c => c.id === l.canal);
                 const div = document.createElement('div');
                 div.className = 'flex justify-between items-center bg-white p-2 rounded border border-slate-200';
@@ -396,7 +444,6 @@
             adicionarLinha("(=) EBITDA / Resultado Operacional", dm => dm.ebitda, false, true);
         }
 
-        // Funções de Exportação
         function exportarPDF() {
             window.print();
         }
@@ -423,7 +470,6 @@
         }
 
         renderizarBotoesCanais();
-        calcularEAtualizarDRE();
     </script>
 </body>
 </html>
