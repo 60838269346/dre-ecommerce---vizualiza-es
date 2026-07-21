@@ -119,7 +119,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Valor (R$)</label>
-                    <input type="number" id="lanc-valor" step="0.01" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="0.00 (Use - para despesas)">
+                    <input type="number" id="lanc-valor" step="0.01" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="0.00 (Ex: -150.00 ou 150.00)">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Descrição / Histórico</label>
@@ -183,12 +183,12 @@
 
         let lancamentos = JSON.parse(localStorage.getItem('dre_lancamentos')) || [
             { conta: "3.1.1.01.001", valor: 10950856.90, desc: "Receita com revenda", mes: "01", ano: "2026" },
-            { conta: "3.1.3.01.001", valor: 440407.30, desc: "ICMS", mes: "01", ano: "2026" },
-            { conta: "3.1.3.01.002", valor: 148077.62, desc: "PIS", mes: "01", ano: "2026" },
-            { conta: "3.1.3.01.003", valor: 683805.96, desc: "COFINS", mes: "01", ano: "2026" },
-            { conta: "4.1.1.01.001", valor: 7419766.91, desc: "CMV", mes: "01", ano: "2026" },
-            { conta: "4.2.1.02.001", valor: 102175.38, desc: "Salários", mes: "01", ano: "2026" },
-            { conta: "4.2.1.01.002", valor: 45000.00, desc: "Embalagens", mes: "01", ano: "2026" }
+            { conta: "3.1.3.01.001", valor: -440407.30, desc: "ICMS", mes: "01", ano: "2026" },
+            { conta: "3.1.3.01.002", valor: -148077.62, desc: "PIS", mes: "01", ano: "2026" },
+            { conta: "3.1.3.01.003", valor: -683805.96, desc: "COFINS", mes: "01", ano: "2026" },
+            { conta: "4.1.1.01.001", valor: -7419766.91, desc: "CMV", mes: "01", ano: "2026" },
+            { conta: "4.2.1.02.001", valor: -102175.38, desc: "Salários", mes: "01", ano: "2026" },
+            { conta: "4.2.1.01.002", valor: -45000.00, desc: "Embalagens", mes: "01", ano: "2026" }
         ];
 
         function popularSelectContas() {
@@ -202,10 +202,10 @@
             });
         }
 
-        function formatarMoeda(valor, exibirParentesesSeNegativo = false) {
+        function formatarMoeda(valor, exibirParenteses = false) {
             let absVal = Math.abs(valor);
             let formatado = absVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            if (exibirParentesesSeNegativo && valor < 0) {
+            if (exibirParenteses && valor < 0) {
                 return `(${formatado})`;
             }
             return formatado;
@@ -231,13 +231,6 @@
             if (isNaN(valor)) {
                 alert('Por favor, informe um valor válido.');
                 return;
-            }
-
-            // Se for conta de despesa/imposto/cmv e o usuário digitou positivo, converte automaticamente para negativo
-            const info = estruturaContas[conta];
-            const ehReceita = info.tipo === 'rec_bruta' || info.tipo === 'outras_rec_op';
-            if (!ehReceita && valor > 0) {
-                valor = -valor;
             }
 
             lancamentos.push({ conta, valor, desc, mes, ano });
@@ -290,21 +283,18 @@
             Object.keys(totaisPorConta).forEach(conta => {
                 let val = totaisPorConta[conta];
                 let info = estruturaContas[conta];
-                
-                // Tratando valores absolutos para soma interna correta baseada na natureza da conta
-                let valAbs = Math.abs(val);
 
-                if (info.tipo === 'rec_bruta') recBruta += valAbs;
-                if (info.tipo === 'imposto') impostos += valAbs;
-                if (info.tipo === 'cmv') cmv += valAbs;
-                if (info.tipo === 'sga_pessoal') sgaPessoal += valAbs;
-                if (info.tipo === 'sga_comercial') sgaComercial += valAbs;
-                if (info.tipo === 'sga_adm') sgaAdm += valAbs;
-                if (info.tipo === 'sga_distribuicao') sgaDistribuicao += valAbs;
-                if (info.tipo === 'sga_tributaria') sgaTributaria += valAbs;
-                if (info.tipo === 'outras_rec_op') outrasRecOp += valAbs;
-                if (info.tipo === 'outras_desp_op') outrasDespOp += valAbs;
-                if (info.tipo === 'outras_rec_desp_op') outrasRecDespOp += valAbs;
+                if (info.tipo === 'rec_bruta') recBruta += val;
+                if (info.tipo === 'imposto') impostos += Math.abs(val);
+                if (info.tipo === 'cmv') cmv += Math.abs(val);
+                if (info.tipo === 'sga_pessoal') sgaPessoal += Math.abs(val);
+                if (info.tipo === 'sga_comercial') sgaComercial += Math.abs(val);
+                if (info.tipo === 'sga_adm') sgaAdm += Math.abs(val);
+                if (info.tipo === 'sga_distribuicao') sgaDistribuicao += Math.abs(val);
+                if (info.tipo === 'sga_tributaria') sgaTributaria += Math.abs(val);
+                if (info.tipo === 'outras_rec_op') outrasRecOp += val;
+                if (info.tipo === 'outras_desp_op') outrasDespOp += Math.abs(val);
+                if (info.tipo === 'outras_rec_desp_op') outrasRecDespOp += val;
             });
 
             let recLiquida = recBruta - impostos;
