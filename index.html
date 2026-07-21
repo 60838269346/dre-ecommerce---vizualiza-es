@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DRE - Demonstração do Resultado do Exercício com Análise Vertical Mensal</title>
+    <title>DRE - Visão Vertical por Canal e Mês</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
@@ -18,8 +18,8 @@
                     <i class="fa-solid fa-chart-line text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight">DRE & Análise Vertical Mensal</h1>
-                    <p class="text-xs text-slate-400">E-commerce - Gestão Sintética</p>
+                    <h1 class="text-xl font-bold tracking-tight">DRE por Canal - Visão Vertical</h1>
+                    <p class="text-xs text-slate-400">E-commerce - Despesas por Canal de Venda</p>
                 </div>
             </div>
             <div>
@@ -33,17 +33,17 @@
 
     <!-- Conteúdo Principal -->
     <main class="max-w-7xl mx-auto px-4 py-8 space-y-6">
-        <!-- Tabela DRE Mês a Mês -->
+        <!-- Tabela DRE Vertical por Canal -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
-                <h2 class="font-bold text-slate-800"><i class="fa-solid fa-table text-slate-500 mr-2"></i> Demonstração do Resultado - Visão Mensal (Valores e A.V. %)</h2>
-                <div class="text-xs text-slate-500">Base A.V.: Receita Líquida do Mês (100%)</div>
+                <h2 class="font-bold text-slate-800"><i class="fa-solid fa-table text-slate-500 mr-2"></i> Canais e Despesas (Valores e A.V. %)</h2>
+                <div class="text-xs text-slate-500">Base A.V.: Receita Total do Mês (100%)</div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-xs">
                     <thead>
                         <tr class="bg-slate-100/70 text-slate-700 font-semibold border-b border-slate-200">
-                            <th class="py-3 px-4 min-w-[220px]">Grupo / Conta Sintética</th>
+                            <th class="py-3 px-4 min-w-[240px]">Canal / Grupo da DRE</th>
                             <!-- Meses gerados dinamicamente via JS -->
                         </tr>
                     </thead>
@@ -59,7 +59,7 @@
     <div id="admin-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden">
             <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
-                <h3 class="font-bold text-base"><i class="fa-solid fa-pen-to-square mr-2"></i> Novo Lançamento na DRE</h3>
+                <h3 class="font-bold text-base"><i class="fa-solid fa-pen-to-square mr-2"></i> Novo Lançamento por Canal</h3>
                 <button onclick="toggleAdminModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-6 space-y-4">
@@ -87,7 +87,7 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Selecione a Conta / Canal</label>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Selecione o Canal / Conta</label>
                     <select id="lanc-conta" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                         <!-- Preenchido dinamicamente -->
                     </select>
@@ -98,7 +98,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Descrição / Histórico</label>
-                    <input type="text" id="lanc-desc" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="Ex: Histórico do lançamento...">
+                    <input type="text" id="lanc-desc" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="Ex: Detalhe do lançamento...">
                 </div>
                 <div class="pt-2 flex justify-end space-x-3">
                     <button onclick="toggleAdminModal()" class="px-4 py-2 border border-slate-300 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancelar</button>
@@ -120,29 +120,46 @@
             "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro"
         };
 
+        const canaisLista = [
+            { id: "app", nome: "1) APP" },
+            { id: "assinatura", nome: "2) ASSINATURA" },
+            { id: "ifood", nome: "3) IFOOD" },
+            { id: "mercadolivre", nome: "4) MERCADO LIVRE" },
+            { id: "renovacao", nome: "5) RENOVACAO" },
+            { id: "site", nome: "6) SITE" }
+        ];
+
+        // Mapeamento de contas de lançamento vinculadas a cada canal ou despesa geral
         const estruturaContas = {
-            "3.1.1.01.001": { nome: "Receita Bruta - Geral", tipo: "rec_bruta" },
-            "3.1.1.02.001": { nome: "Receita - App", tipo: "rec_bruta" },
-            "3.1.1.02.002": { nome: "Receita - Assinatura", tipo: "rec_bruta" },
-            "3.1.1.02.003": { nome: "Receita - iFood", tipo: "rec_bruta" },
-            "3.1.1.02.004": { nome: "Receita - Mercado Livre", tipo: "rec_bruta" },
-            "3.1.1.02.005": { nome: "Receita - Renovação", tipo: "rec_bruta" },
-            "3.1.1.02.006": { nome: "Receita - Site", tipo: "rec_bruta" },
-            "3.1.3.01.001": { nome: "Impostos sobre Vendas", tipo: "imposto" },
-            "4.1.1.01.001": { nome: "Custo das Mercadorias Vendidas (CMV)", tipo: "cmv" },
-            "4.2.1.02.001": { nome: "Gastos com Pessoal", tipo: "sga_pessoal" },
-            "4.2.1.01.002": { nome: "Despesas Comerciais / Embalagens", tipo: "sga_comercial" },
-            "4.2.1.01.115": { nome: "Frete Entrega Cliente", tipo: "sga_distribuicao" },
-            "4.2.1.03.003": { nome: "Despesas Administrativas", tipo: "sga_adm" },
-            "4.2.1.08.017": { nome: "Despesas Tributárias", tipo: "sga_tributaria" },
-            "4.5.1.01.001": { nome: "Outras Despesas Operacionais", tipo: "outras_desp_op" }
+            // APP
+            "rec_app": { nome: "Receita - APP", canal: "app", tipo: "receita" },
+            "desp_app": { nome: "Despesa / Custo - APP", canal: "app", tipo: "despesa" },
+            // ASSINATURA
+            "rec_assinatura": { nome: "Receita - Assinatura", canal: "assinatura", tipo: "receita" },
+            "desp_assinatura": { nome: "Despesa / Custo - Assinatura", canal: "assinatura", tipo: "despesa" },
+            // IFOOD
+            "rec_ifood": { nome: "Receita - iFood", canal: "ifood", tipo: "receita" },
+            "desp_ifood": { nome: "Taxas e Despesas - iFood", canal: "ifood", tipo: "despesa" },
+            // MERCADO LIVRE
+            "rec_mercadolivre": { nome: "Receita - Mercado Livre", canal: "mercadolivre", tipo: "receita" },
+            "desp_mercadolivre": { nome: "Comissões e Fretes - Mercado Livre", canal: "mercadolivre", tipo: "despesa" },
+            // RENOVACAO
+            "rec_renovacao": { nome: "Receita - Renovação", canal: "renovacao", tipo: "receita" },
+            "desp_renovacao": { nome: "Despesas - Renovação", canal: "renovacao", tipo: "despesa" },
+            // SITE
+            "rec_site": { nome: "Receita - Site", canal: "site", tipo: "receita" },
+            "desp_site": { nome: "Despesas / Marketing - Site", canal: "site", tipo: "despesa" },
+            // Gerais
+            "impostos_geral": { nome: "Impostos sobre Vendas (Geral)", canal: "geral", tipo: "despesa" },
+            "cmv_geral": { nome: "CMV Geral", canal: "geral", tipo: "despesa" },
+            "desp_adm": { nome: "Despesas Administrativas", canal: "geral", tipo: "despesa" }
         };
 
-        let lancamentos = JSON.parse(localStorage.getItem('dre_lancamentos')) || [
-            { conta: "3.1.1.02.006", valor: 500000.00, desc: "Site - Jan", mes: "01", ano: "2026" },
-            { conta: "3.1.1.02.003", valor: 300000.00, desc: "iFood - Jan", mes: "01", ano: "2026" },
-            { conta: "3.1.3.01.001", valor: -80000.00, desc: "Impostos - Jan", mes: "01", ano: "2026" },
-            { conta: "4.1.1.01.001", valor: -250000.00, desc: "CMV - Jan", mes: "01", ano: "2026" }
+        let lancamentos = JSON.parse(localStorage.getItem('dre_lancamentos_canais')) || [
+            { conta: "rec_site", valor: 500000.00, desc: "Vendas Site Jan", mes: "01", ano: "2026" },
+            { conta: "desp_site", valor: -50000.00, desc: "Marketing Site Jan", mes: "01", ano: "2026" },
+            { conta: "rec_ifood", valor: 300000.00, desc: "Vendas iFood Jan", mes: "01", ano: "2026" },
+            { conta: "desp_ifood", valor: -45000.00, desc: "Comissão iFood Jan", mes: "01", ano: "2026" }
         ];
 
         function popularSelectContas() {
@@ -185,7 +202,7 @@
             }
 
             lancamentos.push({ conta, valor, desc, mes, ano });
-            localStorage.setItem('dre_lancamentos', JSON.stringify(lancamentos));
+            localStorage.setItem('dre_lancamentos_canais', JSON.stringify(lancamentos));
             document.getElementById('lanc-valor').value = '';
             document.getElementById('lanc-desc').value = '';
             calcularEAtualizarDRE();
@@ -194,7 +211,7 @@
 
         function removerLancamento(index) {
             lancamentos.splice(index, 1);
-            localStorage.setItem('dre_lancamentos', JSON.stringify(lancamentos));
+            localStorage.setItem('dre_lancamentos_canais', JSON.stringify(lancamentos));
             renderizarLancamentosRecentes();
             calcularEAtualizarDRE();
         }
@@ -216,13 +233,12 @@
         }
 
         function calcularEAtualizarDRE() {
-            // Identificar meses presentes nos lançamentos
             let mesesAtivos = [...new Set(lancamentos.map(l => l.mes))].sort();
             if (mesesAtivos.length === 0) mesesAtivos = ["01"];
 
-            // Construir cabeçalho da tabela (Mês e A.V. para cada um)
+            // Montar cabeçalho dinâmico com colunas de Valor e A.V. para cada mês
             const theadTr = document.querySelector('thead tr');
-            theadTr.innerHTML = '<th class="py-3 px-4 min-w-[220px]">Grupo / Conta Sintética</th>';
+            theadTr.innerHTML = '<th class="py-3 px-4 min-w-[240px]">Canal / Grupo da DRE</th>';
             mesesAtivos.forEach(mes => {
                 theadTr.innerHTML += `<th class="py-3 px-3 text-right">${mesesNomes[mes]} (R$)</th><th class="py-3 px-3 text-right">A.V. (%)</th>`;
             });
@@ -230,58 +246,39 @@
             const tbody = document.getElementById('dre-table-body');
             tbody.innerHTML = '';
 
-            // Estruturar dados por mês
             let dadosMes = {};
             mesesAtivos.forEach(mes => {
                 dadosMes[mes] = {
-                    totaisPorConta: {},
-                    recBruta: 0, recApp: 0, recAssinatura: 0, recIfood: 0, recMercadoLivre: 0, recRenovacao: 0, recSite: 0,
-                    impostos: 0, cmv: 0, sgaPessoal: 0, sgaComercial: 0, sgaDistribuicao: 0, sgaAdm: 0, sgaTributaria: 0, outrasDespOp: 0
+                    lancamentosConta: {},
+                    receitaTotal: 0
                 };
-                Object.keys(estruturaContas).forEach(c => dadosMes[mes].totaisPorConta[c] = 0);
+                Object.keys(estruturaContas).forEach(c => dadosMes[mes].lancamentosConta[c] = 0);
             });
 
             lancamentos.forEach(l => {
                 let m = l.mes || "01";
                 if (!dadosMes[m]) {
-                    dadosMes[m] = { totaisPorConta: {}, recBruta: 0, recApp: 0, recAssinatura: 0, recIfood: 0, recMercadoLivre: 0, recRenovacao: 0, recSite: 0, impostos: 0, cmv: 0, sgaPessoal: 0, sgaComercial: 0, sgaDistribuicao: 0, sgaAdm: 0, sgaTributaria: 0, outrasDespOp: 0 };
-                    Object.keys(estruturaContas).forEach(c => dadosMes[m].totaisPorConta[c] = 0);
+                    dadosMes[m] = { lancamentosConta: {}, receitaTotal: 0 };
+                    Object.keys(estruturaContas).forEach(c => dadosMes[m].lancamentosConta[c] = 0);
                 }
-                dadosMes[m].totaisPorConta[l.conta] = (dadosMes[m].totaisPorConta[l.conta] || 0) + l.valor;
+                dadosMes[m].lancamentosConta[l.conta] = (dadosMes[m].lancamentosConta[l.conta] || 0) + l.valor;
             });
 
-            // Processar valores por mês
+            // Calcular receita total de cada mês para servir de base da Análise Vertical (100%)
             mesesAtivos.forEach(mes => {
                 let dm = dadosMes[mes];
-                Object.keys(dm.totaisPorConta).forEach(conta => {
-                    let val = dm.totaisPorConta[conta];
+                Object.keys(dm.lancamentosConta).forEach(conta => {
                     let info = estruturaContas[conta];
-                    if (info.tipo === 'rec_bruta') {
-                        dm.recBruta += val;
-                        if (conta === "3.1.1.02.001") dm.recApp += val;
-                        if (conta === "3.1.1.02.002") dm.recAssinatura += val;
-                        if (conta === "3.1.1.02.003") dm.recIfood += val;
-                        if (conta === "3.1.1.02.004") dm.recMercadoLivre += val;
-                        if (conta === "3.1.1.02.005") dm.recRenovacao += val;
-                        if (conta === "3.1.1.02.006") dm.recSite += val;
+                    let val = dm.lancamentosConta[conta];
+                    if (info.tipo === 'receita') {
+                        dm.receitaTotal += val;
                     }
-                    if (info.tipo === 'imposto') dm.impostos += val;
-                    if (info.tipo === 'cmv') dm.cmv += val;
-                    if (info.tipo === 'sga_pessoal') dm.sgaPessoal += val;
-                    if (info.tipo === 'sga_comercial') dm.sgaComercial += val;
-                    if (info.tipo === 'sga_distribuicao') dm.sgaDistribuicao += val;
-                    if (info.tipo === 'sga_adm') dm.sgaAdm += val;
-                    if (info.tipo === 'sga_tributaria') dm.sgaTributaria += val;
-                    if (info.tipo === 'outras_desp_op') dm.outrasDespOp += val;
                 });
-                dm.recLiquida = dm.recBruta - Math.abs(dm.impostos);
-                dm.lucroBruto = dm.recLiquida - Math.abs(dm.cmv);
-                dm.totalSgaVal = Math.abs(dm.sgaPessoal) + Math.abs(dm.sgaComercial) + Math.abs(dm.sgaDistribuicao) + Math.abs(dm.sgaAdm) + Math.abs(dm.sgaTributaria) + Math.abs(dm.outrasDespOp);
-                dm.ebitda = dm.lucroBruto - dm.totalSgaVal;
+                if (dm.receitaTotal === 0) dm.receitaTotal = 1; // Evitar divisão por zero
             });
 
-            // Função auxiliar para renderizar linhas comparativas entre os meses
-            function adicionarLinhaDRE(nome, seletorValor, isHeader = false, isSubtotal = false, forcarParenteses = false) {
+            // Função para renderizar linhas na tabela
+            function adicionarLinha(nome, seletorValor, isHeader = false, isSubtotal = false, forcarParenteses = false) {
                 let tr = document.createElement('tr');
                 if (isHeader) {
                     tr.className = 'bg-slate-100 font-bold text-slate-900';
@@ -295,8 +292,7 @@
                 mesesAtivos.forEach(mes => {
                     let dm = dadosMes[mes];
                     let val = seletorValor(dm);
-                    let baseAV = dm.recLiquida > 0 ? dm.recLiquida : 1;
-                    let av = (Math.abs(val) / baseAV) * 100;
+                    let av = (Math.abs(val) / dm.receitaTotal) * 100;
                     let valExibicao = forcarParenteses && val > 0 ? -val : val;
 
                     html += `
@@ -308,25 +304,53 @@
                 tbody.appendChild(tr);
             }
 
-            // Linhas da DRE estruturadas conforme solicitado
-            adicionarLinhaDRE("Receita Bruta Total", dm => dm.recBruta, true, false);
-            adicionarLinhaDRE("    • App", dm => dm.recApp, false, false);
-            adicionarLinhaDRE("    • Assinatura", dm => dm.recAssinatura, false, false);
-            adicionarLinhaDRE("    • iFood", dm => dm.recIfood, false, false);
-            adicionarLinhaDRE("    • Mercado Livre", dm => dm.recMercadoLivre, false, false);
-            adicionarLinhaDRE("    • Renovação", dm => dm.recRenovacao, false, false);
-            adicionarLinhaDRE("    • Site", dm => dm.recSite, false, false);
-            
-            adicionarLinhaDRE("(-) Impostos sobre Vendas", dm => dm.impostos, false, false, true);
-            adicionarLinhaDRE("(=) Receita Líquida", dm => dm.recLiquida, false, true);
-            adicionarLinhaDRE("(-) Custo das Mercadorias Vendidas (CMV)", dm => dm.cmv, true, false, true);
-            adicionarLinhaDRE("(=) Lucro Bruto", dm => dm.lucroBruto, false, true);
-            adicionarLinhaDRE("(-) Despesas Operacionais (SG&A)", dm => dm.totalSgaVal, true, false, true);
-            adicionarLinhaDRE("    • Gastos com Pessoal", dm => dm.sgaPessoal, false, false, true);
-            adicionarLinhaDRE("    • Despesas Comerciais", dm => dm.sgaComercial, false, false, true);
-            adicionarLinhaDRE("    • Fretes e Distribuição", dm => dm.sgaDistribuicao, false, false, true);
-            adicionarLinhaDRE("    • Despesas Administrativas", dm => dm.sgaAdm, false, false, true);
-            adicionarLinhaDRE("(=) EBITDA", dm => dm.ebitda, false, true);
+            // Renderizar a estrutura vertical por canal conforme solicitado
+            canaisLista.forEach(canalObj => {
+                let idC = canalObj.id;
+
+                // Cabeçalho do Canal
+                adicionarLinha(canalObj.nome, dm => {
+                    let rec = 0, desp = 0;
+                    Object.keys(estruturaContas).forEach(c => {
+                        if (estruturaContas[c].canal === idC) {
+                            if (estruturaContas[c].tipo === 'receita') rec += dm.lancamentosConta[c];
+                            if (estruturaContas[c].tipo === 'despesa') desp += Math.abs(dm.lancamentosConta[c]);
+                        }
+                    });
+                    return rec - desp; // Resultado líquido do canal
+                }, true, false);
+
+                // Receita do Canal
+                adicionarLinha(`    • Receita do Canal`, dm => {
+                    let rec = 0;
+                    Object.keys(estruturaContas).forEach(c => {
+                        if (estruturaContas[c].canal === idC && estruturaContas[c].tipo === 'receita') {
+                            rec += dm.lancamentosConta[c];
+                        }
+                    });
+                    return rec;
+                }, false, false);
+
+                // Despesa / Custo específico do Canal
+                adicionarLinha(`    • (-) Despesas / Custos Específicos`, dm => {
+                    let desp = 0;
+                    Object.keys(estruturaContas).forEach(c => {
+                        if (estruturaContas[c].canal === idC && estruturaContas[c].tipo === 'despesa') {
+                            desp += Math.abs(dm.lancamentosConta[c]);
+                        }
+                    });
+                    return desp;
+                }, false, false, true);
+            });
+
+            // Totais Gerais
+            adicionarLinha("RECEITA BRUTA TOTAL", dm => {
+                let total = 0;
+                Object.keys(estruturaContas).forEach(c => {
+                    if (estruturaContas[c].tipo === 'receita') total += dm.lancamentosConta[c];
+                });
+                return total;
+            }, true, true);
         }
 
         popularSelectContas();
