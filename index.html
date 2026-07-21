@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DRE por Canal - Visão Individualizada</title>
+    <title>DRE por Canal - Visão Individualizada Completa</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
@@ -19,7 +19,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-bold tracking-tight">DRE Individualizada por Canal</h1>
-                    <p class="text-xs text-slate-400">Selecione o canal para visualizar a DRE mês a mês, A.V. e Acumulado</p>
+                    <p class="text-xs text-slate-400">Estrutura Completa: Mês a Mês, Análise Vertical e Acumulado</p>
                 </div>
             </div>
             <div>
@@ -46,7 +46,7 @@
             <div class="px-6 py-4 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-50/50 gap-2">
                 <div>
                     <h2 id="titulo-dre-canal" class="font-bold text-slate-800 text-base">DRE - Canal</h2>
-                    <p class="text-xs text-slate-500">Visão Mensal, Análise Vertical (%) sobre a Receita do Canal e Acumulado</p>
+                    <p class="text-xs text-slate-500">Visão Mensal, Análise Vertical (%) sobre a Receita Bruta do Canal e Acumulado</p>
                 </div>
                 <div class="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-semibold border border-emerald-200">
                     Base A.V.: Receita Bruta do Canal (100%)
@@ -106,12 +106,17 @@
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Tipo de Lançamento</label>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Tipo de Linha na DRE</label>
                         <select id="lanc-tipo" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                            <option value="receita">Receita (Vendas)</option>
-                            <option value="imposto">(-) Impostos sobre Vendas</option>
-                            <option value="cmv">(-) CMV / Custos Diretos</option>
-                            <option value="desp_operacional">(-) Despesas Operacionais</option>
+                            <option value="receita_bruta">Receita Bruta (Vendas)</option>
+                            <option value="impostos">(-) Impostos sobre Vendas</option>
+                            <option value="cmv">(-) CMV (Custo das Mercadorias)</option>
+                            <option value="pessoal">(-) Gastos com Pessoal</option>
+                            <option value="comercial">(-) Despesas Comerciais / Embalagens</option>
+                            <option value="fretes">(-) Frete / Entrega Cliente</option>
+                            <option value="administrativas">(-) Despesas Administrativas</option>
+                            <option value="tributarias">(-) Despesas Tributárias</option>
+                            <option value="outras_despesas">(-) Outras Despesas Operacionais</option>
                         </select>
                     </div>
                     <div>
@@ -121,7 +126,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Descrição / Histórico</label>
-                    <input type="text" id="lanc-desc" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="Ex: Vendas de Janeiro...">
+                    <input type="text" id="lanc-desc" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="Ex: Faturamento de Janeiro...">
                 </div>
                 <div class="pt-2 flex justify-end space-x-3">
                     <button onclick="toggleAdminModal()" class="px-4 py-2 border border-slate-300 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancelar</button>
@@ -152,15 +157,17 @@
             { id: "site", nome: "6) SITE" }
         ];
 
-        let canalAtivo = "site"; // Canal selecionado por padrão
+        let canalAtivo = "site";
 
-        let lancamentos = JSON.parse(localStorage.getItem('dre_canais_individual_lanc')) || [
-            { canal: "site", tipo: "receita", valor: 500000.00, desc: "Vendas Site Jan", mes: "01", ano: "2026" },
-            { canal: "site", tipo: "imposto", valor: 50000.00, desc: "Impostos Site Jan", mes: "01", ano: "2026" },
-            { canal: "site", tipo: "cmv", valor: 200000.00, desc: "CMV Site Jan", mes: "01", ano: "2026" },
-            { canal: "site", tipo: "desp_operacional", valor: 80000.00, desc: "Despesas Site Jan", mes: "01", ano: "2026" },
-            { canal: "site", tipo: "receita", valor: 600000.00, desc: "Vendas Site Fev", mes: "02", ano: "2026" },
-            { canal: "ifood", tipo: "receita", valor: 300000.00, desc: "Vendas iFood Jan", mes: "01", ano: "2026" }
+        let lancamentos = JSON.parse(localStorage.getItem('dre_canais_completo_lanc')) || [
+            { canal: "site", tipo: "receita_bruta", valor: 500000.00, desc: "Vendas Site Jan", mes: "01", ano: "2026" },
+            { canal: "site", tipo: "impostos", valor: 40000.00, desc: "Impostos Site", mes: "01", ano: "2026" },
+            { canal: "site", tipo: "cmv", valor: 200000.00, desc: "CMV Site", mes: "01", ano: "2026" },
+            { canal: "site", tipo: "pessoal", valor: 30000.00, desc: "Pessoal Site", mes: "01", ano: "2026" },
+            { canal: "site", tipo: "fretes", valor: 25000.00, desc: "Frete Site", mes: "01", ano: "2026" },
+            { canal: "ifood", tipo: "receita_bruta", valor: 300000.00, desc: "Vendas iFood Jan", mes: "01", ano: "2026" },
+            { canal: "ifood", tipo: "impostos", valor: 20000.00, desc: "Impostos iFood", mes: "01", ano: "2026" },
+            { canal: "ifood", tipo: "cmv", valor: 120000.00, desc: "CMV iFood", mes: "01", ano: "2026" }
         ];
 
         function formatarMoeda(valor) {
@@ -221,7 +228,7 @@
             }
 
             lancamentos.push({ canal, tipo, valor, desc, mes, ano });
-            localStorage.setItem('dre_canais_individual_lanc', JSON.stringify(lancamentos));
+            localStorage.setItem('dre_canais_completo_lanc', JSON.stringify(lancamentos));
             document.getElementById('lanc-valor').value = '';
             document.getElementById('lanc-desc').value = '';
             calcularEAtualizarDRE();
@@ -230,7 +237,7 @@
 
         function removerLancamento(index) {
             lancamentos.splice(index, 1);
-            localStorage.setItem('dre_canais_individual_lanc', JSON.stringify(lancamentos));
+            localStorage.setItem('dre_canais_completo_lanc', JSON.stringify(lancamentos));
             renderizarLancamentosRecentes();
             calcularEAtualizarDRE();
         }
@@ -256,54 +263,65 @@
             const objCanalAtivo = canais.find(c => c.id === canalAtivo);
             document.getElementById('titulo-dre-canal').innerText = `DRE Detalhada - ${objCanalAtivo.nome}`;
 
-            // Filtrar lançamentos do canal ativo
             let lancsCanal = lancamentos.filter(l => l.canal === canalAtivo);
             let mesesAtivos = [...new Set(lancsCanal.map(l => l.mes))].sort();
             if (mesesAtivos.length === 0) mesesAtivos = ["01"];
 
-            // Montar cabeçalho da tabela (Mês e A.V. para cada um + Acumulado)
             const theadTr = document.getElementById('dre-thead-tr');
-            let theadHtml = '<th class="py-3 px-4 min-w-[220px]">Estrutura da DRE</th>';
+            let theadHtml = '<th class="py-3 px-4 min-w-[240px]">Estrutura da DRE</th>';
             mesesAtivos.forEach(mes => {
                 theadHtml += `<th class="py-3 px-3 text-right">${mesesNomes[mes]} (R$)</th><th class="py-3 px-3 text-right">A.V. (%)</th>`;
             });
             theadHtml += `<th class="py-3 px-3 text-right bg-slate-200/60">Acumulado (R$)</th><th class="py-3 px-3 text-right bg-slate-200/60">A.V. Acum. (%)</th>`;
             theadTr.innerHTML = theadHtml;
 
-            // Consolidar dados por mês
             let dadosMes = {};
             mesesAtivos.forEach(mes => {
-                dadosMes[mes] = { receitaBruta: 0, impostos: 0, receitaLiquida: 0, cmv: 0, lucroBruto: 0, despOperacional: 0, ebitda: 0 };
+                dadosMes[mes] = {
+                    receitaBruta: 0, impostos: 0, receitaLiquida: 0,
+                    cmv: 0, lucroBruto: 0,
+                    pessoal: 0, comercial: 0, fretes: 0, administrativas: 0, tributarias: 0, outrasDespesas: 0,
+                    totalDespOp: 0, ebitda: 0
+                };
             });
 
             lancsCanal.forEach(l => {
                 let m = l.mes || "01";
                 if (!dadosMes[m]) {
-                    dadosMes[m] = { receitaBruta: 0, impostos: 0, receitaLiquida: 0, cmv: 0, lucroBruto: 0, despOperacional: 0, ebitda: 0 };
+                    dadosMes[m] = { receitaBruta: 0, impostos: 0, receitaLiquida: 0, cmv: 0, lucroBruto: 0, pessoal: 0, comercial: 0, fretes: 0, administrativas: 0, tributarias: 0, outrasDespesas: 0, totalDespOp: 0, ebitda: 0 };
                 }
-                if (l.tipo === 'receita') dadosMes[m].receitaBruta += l.valor;
-                if (l.tipo === 'imposto') dadosMes[m].impostos += l.valor;
-                if (l.tipo === 'cmv') dadosMes[m].cmv += l.valor;
-                if (l.tipo === 'desp_operacional') dadosMes[m].despOperacional += l.valor;
+                if (dadosMes[m][l.tipo] !== undefined) {
+                    dadosMes[m][l.tipo] += l.valor;
+                }
             });
 
-            // Calcular subtotais por mês
             Object.keys(dadosMes).forEach(m => {
                 let dm = dadosMes[m];
                 dm.receitaLiquida = dm.receitaBruta - dm.impostos;
                 dm.lucroBruto = dm.receitaLiquida - dm.cmv;
-                dm.ebitda = dm.lucroBruto - dm.despOperacional;
+                dm.totalDespOp = dm.pessoal + dm.comercial + dm.fretes + dm.administrativas + dm.tributarias + dm.outrasDespesas;
+                dm.ebitda = dm.lucroBruto - dm.totalDespOp;
             });
 
-            // Calcular Acumulado Total
-            let acumuladoTotal = { receitaBruta: 0, impostos: 0, receitaLiquida: 0, cmv: 0, lucroBruto: 0, despOperacional: 0, ebitda: 0 };
+            let acumuladoTotal = {
+                receitaBruta: 0, impostos: 0, receitaLiquida: 0, cmv: 0, lucroBruto: 0,
+                pessoal: 0, comercial: 0, fretes: 0, administrativas: 0, tributarias: 0, outrasDespesas: 0,
+                totalDespOp: 0, ebitda: 0
+            };
+
             Object.values(dadosMes).forEach(dm => {
                 acumuladoTotal.receitaBruta += dm.receitaBruta;
                 acumuladoTotal.impostos += dm.impostos;
                 acumuladoTotal.receitaLiquida += dm.receitaLiquida;
                 acumuladoTotal.cmv += dm.cmv;
                 acumuladoTotal.lucroBruto += dm.lucroBruto;
-                acumuladoTotal.despOperacional += dm.despOperacional;
+                acumuladoTotal.pessoal += dm.pessoal;
+                acumuladoTotal.comercial += dm.comercial;
+                acumuladoTotal.fretes += dm.fretes;
+                acumuladoTotal.administrativas += dm.administrativas;
+                acumuladoTotal.tributarias += dm.tributarias;
+                acumuladoTotal.outrasDespesas += dm.outrasDespesas;
+                acumuladoTotal.totalDespOp += dm.totalDespOp;
                 acumuladoTotal.ebitda += dm.ebitda;
             });
 
@@ -322,7 +340,6 @@
 
                 let html = `<td class="px-4 py-2.5">${nome}</td>`;
                 
-                // Meses individuais
                 mesesAtivos.forEach(mes => {
                     let dm = dadosMes[mes];
                     let val = seletorValor(dm);
@@ -336,7 +353,6 @@
                     `;
                 });
 
-                // Colunas Acumuladas
                 let valAcum = seletorValor(acumuladoTotal);
                 let baseAcumAV = acumuladoTotal.receitaBruta > 0 ? acumuladoTotal.receitaBruta : 1;
                 let avAcum = (Math.abs(valAcum) / baseAcumAV) * 100;
@@ -351,13 +367,19 @@
                 tbody.appendChild(tr);
             }
 
-            // Estrutura padrão DRE por canal
-            adicionarLinha("Receita Bruta", dm => dm.receitaBruta, true, false);
+            // Construção completa da DRE
+            adicionarLinha("Receita Bruta Total", dm => dm.receitaBruta, true, false);
             adicionarLinha("(-) Impostos sobre Vendas", dm => dm.impostos, false, false, true);
             adicionarLinha("(=) Receita Líquida", dm => dm.receitaLiquida, false, true);
             adicionarLinha("(-) Custo das Mercadorias Vendidas (CMV)", dm => dm.cmv, true, false, true);
             adicionarLinha("(=) Lucro Bruto", dm => dm.lucroBruto, false, true);
-            adicionarLinha("(-) Despesas Operacionais", dm => dm.despOperacional, true, false, true);
+            adicionarLinha("(-) Despesas Operacionais (SG&A Totais)", dm => dm.totalDespOp, true, false, true);
+            adicionarLinha("    • Gastos com Pessoal", dm => dm.pessoal, false, false, true);
+            adicionarLinha("    • Despesas Comerciais / Embalagens", dm => dm.comercial, false, false, true);
+            adicionarLinha("    • Fretes / Entrega Cliente", dm => dm.fretes, false, false, true);
+            adicionarLinha("    • Despesas Administrativas", dm => dm.administrativas, false, false, true);
+            adicionarLinha("    • Despesas Tributárias", dm => dm.tributarias, false, false, true);
+            adicionarLinha("    • Outras Despesas Operacionais", dm => dm.outrasDespesas, false, false, true);
             adicionarLinha("(=) EBITDA / Resultado Operacional", dm => dm.ebitda, false, true);
         }
 
