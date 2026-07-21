@@ -261,7 +261,7 @@
                 const realIdx = lancamentos.length - 1 - idx;
                 const div = document.createElement('div');
                 div.className = 'flex justify-between items-center bg-white p-2 rounded border border-slate-200';
-                div.innerHTML = `<span><strong>${l.mes || '01'}/${l.ano || '2026'} - ${l.conta}</strong>: ${formatarMoeda(l.valor, true)}</span> <button onclick="removerLancamento(${realIdx})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>`;
+                div.innerHTML = `<span><strong>${l.mes || '01'}/${l.ano || '2026'} - ${l.conta}</strong>: ${formatarMoeda(l.valor, l.valor < 0)}</span> <button onclick="removerLancamento(${realIdx})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>`;
                 container.appendChild(div);
             });
         }
@@ -285,22 +285,22 @@
                 let info = estruturaContas[conta];
 
                 if (info.tipo === 'rec_bruta') recBruta += val;
-                if (info.tipo === 'imposto') impostos += Math.abs(val);
-                if (info.tipo === 'cmv') cmv += Math.abs(val);
-                if (info.tipo === 'sga_pessoal') sgaPessoal += Math.abs(val);
-                if (info.tipo === 'sga_comercial') sgaComercial += Math.abs(val);
-                if (info.tipo === 'sga_adm') sgaAdm += Math.abs(val);
-                if (info.tipo === 'sga_distribuicao') sgaDistribuicao += Math.abs(val);
-                if (info.tipo === 'sga_tributaria') sgaTributaria += Math.abs(val);
+                if (info.tipo === 'imposto') impostos += val; 
+                if (info.tipo === 'cmv') cmv += val; 
+                if (info.tipo === 'sga_pessoal') sgaPessoal += val; 
+                if (info.tipo === 'sga_comercial') sgaComercial += val; 
+                if (info.tipo === 'sga_adm') sgaAdm += val; 
+                if (info.tipo === 'sga_distribuicao') sgaDistribuicao += val; 
+                if (info.tipo === 'sga_tributaria') sgaTributaria += val; 
                 if (info.tipo === 'outras_rec_op') outrasRecOp += val;
-                if (info.tipo === 'outras_desp_op') outrasDespOp += Math.abs(val);
+                if (info.tipo === 'outras_desp_op') outrasDespOp += val; 
                 if (info.tipo === 'outras_rec_desp_op') outrasRecDespOp += val;
             });
 
-            let recLiquida = recBruta - impostos;
-            let lucroBruto = recLiquida - cmv;
-            let totalSga = sgaPessoal + sgaComercial + sgaAdm + sgaDistribuicao + sgaTributaria + outrasDespOp - outrasRecOp - outrasRecDespOp;
-            let ebitda = lucroBruto - totalSga;
+            let recLiquida = recBruta - Math.abs(impostos);
+            let lucroBruto = recLiquida - Math.abs(cmv);
+            let totalSgaVal = Math.abs(sgaPessoal) + Math.abs(sgaComercial) + Math.abs(sgaAdm) + Math.abs(sgaDistribuicao) + Math.abs(sgaTributaria) + Math.abs(outrasDespOp) - outrasRecOp - outrasRecDespOp;
+            let ebitda = lucroBruto - totalSgaVal;
 
             document.getElementById('card-rec-bruta').innerText = formatarMoeda(recBruta);
             document.getElementById('card-rec-liq').innerText = formatarMoeda(recLiquida);
@@ -311,8 +311,8 @@
             tbody.innerHTML = '';
             const baseAV = recLiquida > 0 ? recLiquida : 1;
 
-            function adicionarLinha(nome, valor, isHeader = false, isSubtotal = false, usarParenteses = false) {
-                let av = (valor / baseAV) * 100;
+            function adicionarLinha(nome, valor, isHeader = false, isSubtotal = false, forcarParenteses = false) {
+                let av = (Math.abs(valor) / baseAV) * 100;
                 let tr = document.createElement('tr');
                 if (isHeader) {
                     tr.className = 'bg-slate-100 font-bold text-slate-900';
@@ -321,26 +321,33 @@
                 } else {
                     tr.className = 'hover:bg-slate-50/80 transition';
                 }
+
+                // Se forçar parenteses for true e o valor for diferente de 0, exibe negativo/com parênteses
+                let valExibicao = valor;
+                if (forcarParenteses && valor > 0) {
+                    valExibicao = -valor;
+                }
+
                 tr.innerHTML = `
                     <td class="px-6 py-3">${nome}</td>
-                    <td class="py-3 px-6 text-right font-medium">${formatarMoeda(valor, usarParenteses)}</td>
+                    <td class="py-3 px-6 text-right font-medium">${formatarMoeda(valExibicao, valExibicao < 0)}</td>
                     <td class="py-3 px-6 text-right text-slate-500">${formatarPercentual(av)}</td>
                 `;
                 tbody.appendChild(tr);
             }
 
-            adicionarLinha("Receita Bruta Total", recBruta, true, false, false);
+            adicionarLinha("Receita Bruta Total", recBruta, true, false, recBruta < 0);
             adicionarLinha("(-) Impostos sobre Vendas", impostos, false, false, true);
-            adicionarLinha("(=) Receita Líquida", recLiquida, false, true, false);
+            adicionarLinha("(=) Receita Líquida", recLiquida, false, true, recLiquida < 0);
             adicionarLinha("(-) Custo das Mercadorias Vendidas (CMV)", cmv, true, false, true);
-            adicionarLinha("(=) Lucro Bruto", lucroBruto, false, true, false);
-            adicionarLinha("(-) Despesas Operacionais (SG&A)", totalSga, true, false, true);
+            adicionarLinha("(=) Lucro Bruto", lucroBruto, false, true, lucroBruto < 0);
+            adicionarLinha("(-) Despesas Operacionais (SG&A)", totalSgaVal, true, false, true);
             adicionarLinha("    • Gastos com Pessoal", sgaPessoal, false, false, true);
             adicionarLinha("    • Despesas Comerciais", sgaComercial, false, false, true);
             adicionarLinha("    • Despesas com Manut e Fretes", sgaDistribuicao, false, false, true);
             adicionarLinha("    • Despesas Administrativas", sgaAdm, false, false, true);
             adicionarLinha("    • Despesas Tributárias", sgaTributaria, false, false, true);
-            adicionarLinha("(=) EBITDA", ebitda, false, true, false);
+            adicionarLinha("(=) EBITDA", ebitda, false, true, ebitda < 0);
         }
 
         popularSelectContas();
