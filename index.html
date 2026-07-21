@@ -163,24 +163,21 @@
         };
 
         const canais = [
-            { id: "app", nome: "1) APP" },
-            { id: "assinatura", nome: "2) ASSINATURA" },
-            { id: "ifood", nome: "3) IFOOD" },
-            { id: "mercadolivre", nome: "4) MERCADO LIVRE" },
-            { id: "renovacao", nome: "5) RENOVACAO" },
-            { id: "site", nome: "6) SITE" }
+            { id: "ifood", nome: "1) IFOOD" },
+            { id: "app_site", nome: "2) APP/SITE" },
+            { id: "marketplace", nome: "3) MARKETPLACE" }
         ];
 
-        let canalAtivo = "site";
+        let canalAtivo = "app_site";
         let anoAtivo = "2026";
 
         let lancamentos = JSON.parse(localStorage.getItem('dre_canais_completo_lanc')) || [
-            { canal: "site", tipo: "receita_bruta", valor: 500000.00, desc: "Vendas Site Jan", mes: "01", ano: "2026" },
-            { canal: "site", tipo: "impostos", valor: 40000.00, desc: "Impostos Site", mes: "01", ano: "2026" },
-            { canal: "site", tipo: "cmv", valor: 200000.00, desc: "CMV Site", mes: "01", ano: "2026" },
-            { canal: "site", tipo: "pessoal", valor: 30000.00, desc: "Pessoal Site", mes: "01", ano: "2026" },
-            { canal: "site", tipo: "fretes", valor: 25000.00, desc: "Frete Site", mes: "01", ano: "2026" },
-            { canal: "site", tipo: "receita_bruta", valor: 550000.00, desc: "Vendas Site Fev", mes: "02", ano: "2026" },
+            { canal: "app_site", tipo: "receita_bruta", valor: 500000.00, desc: "Vendas App/Site Jan", mes: "01", ano: "2026" },
+            { canal: "app_site", tipo: "impostos", valor: 40000.00, desc: "Impostos App/Site", mes: "01", ano: "2026" },
+            { canal: "app_site", tipo: "cmv", valor: 200000.00, desc: "CMV App/Site", mes: "01", ano: "2026" },
+            { canal: "app_site", tipo: "pessoal", valor: 30000.00, desc: "Pessoal App/Site", mes: "01", ano: "2026" },
+            { canal: "app_site", tipo: "fretes", valor: 25000.00, desc: "Frete App/Site", mes: "01", ano: "2026" },
+            { canal: "app_site", tipo: "receita_bruta", valor: 550000.00, desc: "Vendas App/Site Fev", mes: "02", ano: "2026" },
             { canal: "ifood", tipo: "receita_bruta", valor: 300000.00, desc: "Vendas iFood Jan", mes: "01", ano: "2026" }
         ];
 
@@ -238,11 +235,10 @@
             const ano = document.getElementById('lanc-ano').value;
             const canal = document.getElementById('lanc-canal').value;
             const tipo = document.getElementById('lanc-tipo').value;
-            
             let valorStr = document.getElementById('lanc-valor').value.replace(',', '.');
             let valor = parseFloat(valorStr);
             const desc = document.getElementById('lanc-desc').value || "Lançamento DRE";
-            
+
             if (isNaN(valor) || valor <= 0) {
                 alert('Por favor, informe um valor numérico positivo válido.');
                 return;
@@ -250,10 +246,9 @@
 
             lancamentos.push({ canal, tipo, valor, desc, mes, ano });
             localStorage.setItem('dre_canais_completo_lanc', JSON.stringify(lancamentos));
-            
+
             document.getElementById('lanc-valor').value = '';
             document.getElementById('lanc-desc').value = '';
-            
             document.getElementById('filtro-ano').value = ano;
             anoAtivo = ano;
 
@@ -280,13 +275,13 @@
                 const canalObj = canais.find(c => c.id === l.canal);
                 const div = document.createElement('div');
                 div.className = 'flex justify-between items-center bg-white p-2 rounded border border-slate-200';
-                div.innerHTML = `<span><strong>${canalObj?.nome} (${l.mes}/${l.ano})</strong> - ${l.tipo}: ${formatarMoeda(l.valor)}</span> <button onclick="removerLancamento(${realIdx})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>`;
+                div.innerHTML = `<span><strong>${canalObj?.nome || l.canal} (${l.mes}/${l.ano})</strong> - ${l.tipo}: ${formatarMoeda(l.valor)}</span> <button onclick="removerLancamento(${realIdx})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>`;
                 container.appendChild(div);
             });
         }
 
         function calcularEAtualizarDRE() {
-            const objCanalAtivo = canais.find(c => c.id === canalAtivo);
+            const objCanalAtivo = canais.find(c => c.id === canalAtivo) || canais[0];
             document.getElementById('titulo-dre-canal').innerText = `DRE Detalhada - ${objCanalAtivo.nome} (${anoAtivo})`;
 
             let lancsCanalAno = lancamentos.filter(l => l.canal === canalAtivo && l.ano === anoAtivo);
@@ -304,9 +299,9 @@
             mesesAtivos.forEach(mes => {
                 dadosMes[mes] = {
                     receitaBruta: 0, impostos: 0, receitaLiquida: 0,
-                    cmv: 0, lucroBruto: 0,
-                    pessoal: 0, comercial: 0, fretes: 0, administrativas: 0, tributarias: 0, outrasDespesas: 0,
-                    totalDespOp: 0, ebitda: 0
+                    cmv: 0, lucroBruto: 0, pessoal: 0, comercial: 0,
+                    fretes: 0, administrativas: 0, tributarias: 0,
+                    outrasDespesas: 0, totalDespOp: 0, ebitda: 0
                 };
             });
 
@@ -326,9 +321,10 @@
             });
 
             let acumuladoAno = {
-                receitaBruta: 0, impostos: 0, receitaLiquida: 0, cmv: 0, lucroBruto: 0,
-                pessoal: 0, comercial: 0, fretes: 0, administrativas: 0, tributarias: 0, outrasDespesas: 0,
-                totalDespOp: 0, ebitda: 0
+                receitaBruta: 0, impostos: 0, receitaLiquida: 0,
+                cmv: 0, lucroBruto: 0, pessoal: 0, comercial: 0,
+                fretes: 0, administrativas: 0, tributarias: 0,
+                outrasDespesas: 0, totalDespOp: 0, ebitda: 0
             };
 
             Object.values(dadosMes).forEach(dm => {
@@ -361,7 +357,6 @@
                 }
 
                 let html = `<td class="px-4 py-2.5">${nome}</td>`;
-                
                 mesesAtivos.forEach(mes => {
                     let dm = dadosMes[mes];
                     let val = seletorValor(dm);
