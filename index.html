@@ -23,7 +23,15 @@
                     <p class="text-xs text-slate-400">Visão Anual, Mês a Mês, Análise Vertical e Acumulado</p>
                 </div>
             </div>
-            <div>
+            <div class="flex flex-wrap items-center gap-2">
+                <button onclick="exportarExcel()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition shadow-sm flex items-center space-x-1.5">
+                    <i class="fa-solid fa-file-excel text-emerald-400"></i>
+                    <span>Baixar Excel</span>
+                </button>
+                <button onclick="exportarPDF()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition shadow-sm flex items-center space-x-1.5">
+                    <i class="fa-solid fa-file-pdf text-red-400"></i>
+                    <span>Baixar PDF</span>
+                </button>
                 <button onclick="toggleAdminModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm flex items-center space-x-2">
                     <i class="fa-solid fa-plus-circle"></i>
                     <span>Novo Lançamento</span>
@@ -54,7 +62,7 @@
         </div>
 
         <!-- Tabela DRE do Canal Selecionado -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div id="dre-container-export" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-50/50 gap-2">
                 <div>
                     <h2 id="titulo-dre-canal" class="font-bold text-slate-800 text-base">DRE - Canal</h2>
@@ -66,7 +74,7 @@
             </div>
             
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse text-xs">
+                <table id="tabela-dre-dados" class="w-full text-left border-collapse text-xs">
                     <thead>
                         <tr id="dre-thead-tr" class="bg-slate-100/70 text-slate-700 font-semibold border-b border-slate-200">
                             <!-- Preenchido via JavaScript -->
@@ -395,9 +403,34 @@
             adicionarLinha("(=) EBITDA / Resultado Operacional", dm => dm.ebitda, false, true);
         }
 
+        // Funções de Exportação
+        function exportarPDF() {
+            window.print();
+        }
+
+        function exportarExcel() {
+            const tabela = document.getElementById("tabela-dre-dados");
+            let csv = [];
+            for (let i = 0; i < tabela.rows.length; i++) {
+                let row = [], cols = tabela.rows[i].querySelectorAll("th, td");
+                for (let j = 0; j < cols.length; j++) {
+                    let texto = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").replace(/;/g, ",");
+                    row.push('"' + texto + '"');
+                }
+                csv.push(row.join(";"));
+            }
+            let csvFile = new Blob(["\uFEFF" + csv.join("\n")], { type: "text/csv;charset=utf-8;" });
+            let downloadLink = document.createElement("a");
+            downloadLink.download = `DRE_${canalAtivo}_${anoAtivo}.csv`;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
         renderizarBotoesCanais();
         calcularEAtualizarDRE();
     </script>
 </body>
 </html>
-
