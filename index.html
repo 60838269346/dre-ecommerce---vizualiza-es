@@ -120,7 +120,9 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Selecione o Canal</label>
                     <select id="lanc-canal" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                        <!-- Preenchido dinamicamente -->
+                        <option value="1) IFOOD">1) IFOOD</option>
+                        <option value="2) APP/SITE">2) APP/SITE</option>
+                        <option value="3) MARKETPLACE">3) MARKETPLACE</option>
                     </select>
                 </div>
 
@@ -179,9 +181,9 @@
         let canalAtivo = "1) IFOOD";
         let anoAtivo = "2026";
 
-        // Dados iniciais de exemplo para garantir que a DRE nunca nasça zerada
+        // Garante dados padrão iniciais se o armazenamento estiver vazio
         let lancamentos = JSON.parse(localStorage.getItem('dre_canais_v3_lanc')) || [
-            { canal: "1) IFOOD", tipo: "receita_bruta", valor: 10000.00, desc: "Exemplo iFood", mes: "01", ano: "2026" }
+            { canal: "1) IFOOD", tipo: "receita_bruta", valor: 10000, desc: "Exemplo Inicial", mes: "01", ano: "2026" }
         ];
 
         function formatarMoeda(valor) {
@@ -192,17 +194,6 @@
 
         function formatarPercentual(valor) {
             return valor.toFixed(2).replace('.', ',') + '%';
-        }
-
-        function popularSelectCanais() {
-            const select = document.getElementById('lanc-canal');
-            select.innerHTML = '';
-            canais.forEach(c => {
-                let opt = document.createElement('option');
-                opt.value = c.id;
-                opt.innerText = c.nome;
-                select.appendChild(opt);
-            });
         }
 
         function renderizarBotoesCanais() {
@@ -244,7 +235,7 @@
             const desc = document.getElementById('lanc-desc').value || "Lançamento DRE";
 
             if (isNaN(valor) || valor <= 0) {
-                alert('Por favor, informe um valor numérico positivo válido.');
+                alert('Por favor, informe um valor numérico válido.');
                 return;
             }
 
@@ -414,7 +405,6 @@
             adicionarLinha("(=) EBITDA / Resultado Operacional", dm => dm.ebitda, false, true);
         }
 
-        popularSelectCanais();
         renderizarBotoesCanais();
         calcularEAtualizarDRE();
     </script>
