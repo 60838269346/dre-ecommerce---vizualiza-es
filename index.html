@@ -171,14 +171,16 @@
         let canalAtivo = "app_site";
         let anoAtivo = "2026";
 
-        let lancamentos = JSON.parse(localStorage.getItem('dre_canais_completo_lanc')) || [
+        // Chave atualizada do storage para evitar conflitos com dados antigos órfãos
+        let lancamentos = JSON.parse(localStorage.getItem('dre_canais_v3_lanc')) || [
             { canal: "app_site", tipo: "receita_bruta", valor: 500000.00, desc: "Vendas App/Site Jan", mes: "01", ano: "2026" },
             { canal: "app_site", tipo: "impostos", valor: 40000.00, desc: "Impostos App/Site", mes: "01", ano: "2026" },
             { canal: "app_site", tipo: "cmv", valor: 200000.00, desc: "CMV App/Site", mes: "01", ano: "2026" },
             { canal: "app_site", tipo: "pessoal", valor: 30000.00, desc: "Pessoal App/Site", mes: "01", ano: "2026" },
             { canal: "app_site", tipo: "fretes", valor: 25000.00, desc: "Frete App/Site", mes: "01", ano: "2026" },
             { canal: "app_site", tipo: "receita_bruta", valor: 550000.00, desc: "Vendas App/Site Fev", mes: "02", ano: "2026" },
-            { canal: "ifood", tipo: "receita_bruta", valor: 300000.00, desc: "Vendas iFood Jan", mes: "01", ano: "2026" }
+            { canal: "ifood", tipo: "receita_bruta", valor: 300000.00, desc: "Vendas iFood Jan", mes: "01", ano: "2026" },
+            { canal: "marketplace", tipo: "receita_bruta", valor: 150000.00, desc: "Vendas Marketplace Jan", mes: "01", ano: "2026" }
         ];
 
         function formatarMoeda(valor) {
@@ -245,20 +247,22 @@
             }
 
             lancamentos.push({ canal, tipo, valor, desc, mes, ano });
-            localStorage.setItem('dre_canais_completo_lanc', JSON.stringify(lancamentos));
+            localStorage.setItem('dre_canais_v3_lanc', JSON.stringify(lancamentos));
 
             document.getElementById('lanc-valor').value = '';
             document.getElementById('lanc-desc').value = '';
             document.getElementById('filtro-ano').value = ano;
             anoAtivo = ano;
+            canalAtivo = canal; // Muda automaticamente para o canal do lançamento para conferência imediata
 
+            renderizarBotoesCanais();
             calcularEAtualizarDRE();
             toggleAdminModal();
         }
 
         function removerLancamento(index) {
             lancamentos.splice(index, 1);
-            localStorage.setItem('dre_canais_completo_lanc', JSON.stringify(lancamentos));
+            localStorage.setItem('dre_canais_v3_lanc', JSON.stringify(lancamentos));
             renderizarLancamentosRecentes();
             calcularEAtualizarDRE();
         }
@@ -308,7 +312,7 @@
             lancsCanalAno.forEach(l => {
                 let m = l.mes || "01";
                 if (dadosMes[m] && dadosMes[m][l.tipo] !== undefined) {
-                    dadosMes[m][l.tipo] += l.valor;
+                    dadosMes[m][l.tipo] += Number(l.valor);
                 }
             });
 
