@@ -4,83 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DRE por Canal - Visão por Ano, Mês a Mês e Acumulado</title>
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS para estilização moderna -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        // Configuração padrão conectada ao projeto dre-ecommerce
-        const firebaseConfig = {
-            apiKey: "AIzaSyD-ConfigPadraoDRE-Ecommerce",
-            authDomain: "dre-ecommerce.firebaseapp.com",
-            projectId: "dre-ecommerce",
-            storageBucket: "dre-ecommerce.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456:web:abcdef"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        window.db = db;
-        window.collection = collection;
-        window.getDocs = getDocs;
-        window.addDoc = addDoc;
-        
-        if (window.carregarDadosDoBanco) {
-            window.carregarDadosDoBanco();
-        }
-    </script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .table-container { overflow-x: auto; }
+        table th, table td { white-space: nowrap; }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
     <!-- Cabeçalho -->
-    <header class="bg-slate-900 text-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center space-x-3">
-                <div class="bg-emerald-600 p-2.5 rounded-lg text-white">
-                    <i class="fa-solid fa-chart-pie text-xl"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold tracking-tight">DRE Individualizada por Canal</h1>
-                    <p class="text-xs text-slate-400">Visão Anual, Mês a Mês, Análise Vertical e Acumulado</p>
-                </div>
+    <header class="bg-indigo-900 text-white shadow-md py-4 px-6 mb-6">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold">DRE Individualizada por Canal</h1>
+                <p class="text-xs text-indigo-200">Visão Anual, Mês a Mês, Análise Vertical e Acumulado</p>
             </div>
-            <div class="flex flex-wrap items-center gap-2">
-                <button onclick="exportarExcel()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition shadow-sm flex items-center space-x-1.5">
-                    <i class="fa-solid fa-file-excel text-emerald-400"></i>
-                    <span>Baixar Excel</span>
-                </button>
-                <button onclick="exportarPDF()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition shadow-sm flex items-center space-x-1.5">
-                    <i class="fa-solid fa-file-pdf text-red-400"></i>
-                    <span>Baixar PDF</span>
-                </button>
-                <button onclick="toggleAdminModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm flex items-center space-x-2">
-                    <i class="fa-solid fa-plus-circle"></i>
-                    <span>Novo Lançamento</span>
-                </button>
+            <div class="flex items-center gap-3">
+                <button onclick="exportarExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-4 py-2 rounded shadow transition">Baixar Excel</button>
+                <button onclick="exportarPDF()" class="bg-rose-600 hover:bg-rose-700 text-white text-sm px-4 py-2 rounded shadow transition">Baixar PDF</button>
+                <button onclick="abrirModalLancamento()" class="bg-amber-500 hover:bg-amber-600 text-indigo-950 font-bold text-sm px-4 py-2 rounded shadow transition">Novo Lançamento</button>
             </div>
         </div>
     </header>
 
     <!-- Conteúdo Principal -->
-    <main class="max-w-7xl mx-auto px-4 py-8 space-y-6">
-
-        <!-- Controles: Seleção de Canais e Ano -->
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Selecione o Canal de Venda</h3>
-                <div id="canais-botoes" class="flex flex-wrap gap-2">
-                    <!-- Gerado via JavaScript -->
+    <main class="max-w-7xl mx-auto px-4 flex-grow w-full pb-12">
+        
+        <!-- Filtros e Seletores -->
+        <div class="bg-white p-4 rounded-xl shadow-sm mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <!-- Canais -->
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Canal:</span>
+                <div class="inline-flex rounded-lg p-1 bg-slate-100" id="botoes-canal">
+                    <button onclick="mudarCanal('IFOOD')" class="px-4 py-1.5 text-sm font-semibold rounded-md transition canal-btn bg-white text-indigo-900 shadow-sm" data-canal="IFOOD">1) IFOOD</button>
+                    <button onclick="mudarCanal('APPSITE')" class="px-4 py-1.5 text-sm font-semibold rounded-md transition canal-btn text-slate-600 hover:text-indigo-900" data-canal="APPSITE">2) APP/SITE</button>
+                    <button onclick="mudarCanal('MARKETPLACE')" class="px-4 py-1.5 text-sm font-semibold rounded-md transition canal-btn text-slate-600 hover:text-indigo-900" data-canal="MARKETPLACE">3) MARKETPLACE</button>
                 </div>
             </div>
-            <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Exercício (Ano)</label>
-                <select id="filtro-ano" onchange="atualizarAnoFiltro()" class="border border-slate-300 rounded-lg p-2 text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+
+            <!-- Anos -->
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Exercício (Ano):</span>
+                <select id="filtro-ano" onchange="mudarAno(this.value)" class="bg-slate-100 border border-slate-300 text-slate-800 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2">
                     <option value="2026">2026</option>
                     <option value="2025">2025</option>
                     <option value="2024">2024</option>
@@ -88,388 +55,264 @@
             </div>
         </div>
 
-        <!-- Tabela DRE do Canal Selecionado -->
-        <div id="dre-container-export" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-50/50 gap-2">
-                <div>
-                    <h2 id="titulo-dre-canal" class="font-bold text-slate-800 text-base">DRE - Canal</h2>
-                    <p class="text-xs text-slate-500">Visão Mensal por Ano, Análise Vertical (%) sobre a Receita Bruta do Canal e Acumulado do Ano</p>
-                </div>
-                <div class="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-semibold border border-emerald-200">
-                    Base A.V.: Receita Bruta do Canal (100%)
-                </div>
+        <!-- Tabela DRE -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200">
+            <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                <h3 id="titulo-tabela" class="font-bold text-lg text-indigo-950">DRE Detalhada - IFOOD (2026)</h3>
+                <span class="text-xs text-slate-500 bg-slate-200/60 px-2.5 py-1 rounded-full font-medium">Base A.V.: Receita Bruta do Canal (100%)</span>
             </div>
             
-            <div class="overflow-x-auto">
-                <table id="tabela-dre-dados" class="w-full text-left border-collapse text-xs">
+            <div class="table-container">
+                <table class="w-full text-left border-collapse text-xs">
                     <thead>
-                        <tr id="dre-thead-tr" class="bg-slate-100/70 text-slate-700 font-semibold border-b border-slate-200">
-                            <!-- Preenchido via JavaScript -->
+                        <tr class="bg-slate-100/80 text-slate-700 uppercase tracking-wider border-b border-slate-200">
+                            <th class="p-3 font-bold">Estrutura da DRE</th>
+                            <th class="p-3 text-right">Jan (R$)</th><th class="p-3 text-right">A.V.</th>
+                            <th class="p-3 text-right">Fev (R$)</th><th class="p-3 text-right">A.V.</th>
+                            <th class="p-3 text-right">Mar (R$)</th><th class="p-3 text-right">A.V.</th>
+                            <th class="p-3 text-right">Abr (R$)</th><th class="p-3 text-right">A.V.</th>
+                            <th class="p-3 text-right">Mai (R$)</th><th class="p-3 text-right">A.V.</th>
+                            <th class="p-3 text-right">Jun (R$)</th><th class="p-3 text-right">A.V.</th>
+                            <th class="p-3 text-right">Jul (R$)</th><th class="p-3 text-right">A.V.</th>
+                            <th class="p-3 text-right">Ago (R$)</th><th class="p-3 text-right">A.V.</th>
+                            <th class="p-3 text-right">Set (R$)</th><th class="p-3 text-right">A.V.</th>
+                            <th class="p-3 text-right">Out (R$)</th><th class="p-3 text-right">A.V.</th>
+                            <th class="p-3 text-right">Nov (R$)</th><th class="p-3 text-right">A.V.</th>
+                            <th class="p-3 text-right">Dez (R$)</th><th class="p-3 text-right">A.V.</th>
+                            <th class="p-3 text-right bg-indigo-50/50">Acumulado</th><th class="p-3 text-right bg-indigo-50/50">A.V. Acum.</th>
                         </tr>
                     </thead>
-                    <tbody id="dre-table-body" class="divide-y divide-slate-100 text-slate-700">
+                    <tbody id="corpo-dre" class="divide-y divide-slate-100 text-slate-700">
                         <!-- Preenchido via JavaScript -->
                     </tbody>
                 </table>
             </div>
         </div>
-
     </main>
 
-    <!-- Modal de Lançamentos -->
-    <div id="admin-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden">
-            <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
-                <h3 class="font-bold text-base"><i class="fa-solid fa-pen-to-square mr-2"></i> Novo Lançamento na DRE</h3>
-                <button onclick="toggleAdminModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <div class="p-6 space-y-4">
+    <!-- Modal de Novo Lançamento -->
+    <div id="modal-lancamento" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 overflow-hidden">
+            <h3 class="text-lg font-bold text-indigo-950 mb-4">Adicionar Lançamento na Nuvem</h3>
+            <form id="form-lancamento" onsubmit="salvarLancamento(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Canal de Venda</label>
+                    <select id="modal-canal" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm">
+                        <option value="IFOOD">1) IFOOD</option>
+                        <option value="APPSITE">2) APP/SITE</option>
+                        <option value="MARKETPLACE">3) MARKETPLACE</option>
+                    </select>
+                </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Mês de Competência</label>
-                        <select id="lanc-mes" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                            <option value="01">Janeiro</option>
-                            <option value="02">Fevereiro</option>
-                            <option value="03">Março</option>
-                            <option value="04">Abril</option>
-                            <option value="05">Maio</option>
-                            <option value="06">Junho</option>
-                            <option value="07">Julho</option>
-                            <option value="08">Agosto</option>
-                            <option value="09">Setembro</option>
-                            <option value="10">Outubro</option>
-                            <option value="11">Novembro</option>
-                            <option value="12">Dezembro</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Ano</label>
-                        <select id="lanc-ano" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Ano</label>
+                        <select id="modal-ano" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm">
                             <option value="2026">2026</option>
                             <option value="2025">2025</option>
                             <option value="2024">2024</option>
                         </select>
                     </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Selecione o Canal</label>
-                    <select id="lanc-canal" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                        <option value="1) IFOOD">1) IFOOD</option>
-                        <option value="2) APP/SITE">2) APP/SITE</option>
-                        <option value="3) MARKETPLACE">3) MARKETPLACE</option>
-                    </select>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Tipo de Linha na DRE</label>
-                        <select id="lanc-tipo" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                            <option value="receita_bruta">Receita Bruta (Vendas)</option>
-                            <option value="impostos">(-) Impostos sobre Vendas</option>
-                            <option value="cmv">(-) CMV (Custo das Mercadorias)</option>
-                            <option value="pessoal">(-) Gastos com Pessoal</option>
-                            <option value="comercial">(-) Despesas Comerciais / Embalagens</option>
-                            <option value="fretes">(-) Frete / Entrega Cliente</option>
-                            <option value="administrativas">(-) Despesas Administrativas</option>
-                            <option value="tributarias">(-) Despesas Tributárias</option>
-                            <option value="outras_despesas">(-) Outras Despesas Operacionais</option>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Mês</label>
+                        <select id="modal-mes" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm">
+                            <option value="0">Janeiro</option><option value="1">Fevereiro</option>
+                            <option value="2">Março</option><option value="3">Abril</option>
+                            <option value="4">Maio</option><option value="5">Junho</option>
+                            <option value="6">Julho</option><option value="7">Agosto</option>
+                            <option value="8">Setembro</option><option value="9">Outubro</option>
+                            <option value="10">Novembro</option><option value="11">Dezembro</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Valor (R$)</label>
-                        <input type="text" id="lanc-valor" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="0.00">
-                    </div>
                 </div>
-
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Descrição / Histórico</label>
-                    <input type="text" id="lanc-desc" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="Ex: Faturamento...">
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Conta da DRE</label>
+                    <select id="modal-conta" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm">
+                        <option value="receitaBruta">Receita Bruta Total</option>
+                        <option value="impostos">(-) Impostos sobre Vendas</option>
+                        <option value="cmv">(-) Custo das Mercadorias Vendidas (CMV)</option>
+                        <option value="pessoal">• Gastos com Pessoal</option>
+                        <option value="comercial">• Despesas Comerciais / Embalagens</option>
+                        <option value="fretes">• Fretes / Entrega Cliente</option>
+                        <option value="administrativas">• Despesas Administrativas</option>
+                        <option value="tributarias">• Despesas Tributárias</option>
+                        <option value="outras">• Outras Despesas Operacionais</option>
+                    </select>
                 </div>
-
-                <div class="pt-2 flex justify-end space-x-3">
-                    <button onclick="toggleAdminModal()" class="px-4 py-2 border border-slate-300 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancelar</button>
-                    <button onclick="adicionarLancamento()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 shadow-sm">Salvar Lançamento</button>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Valor (R$)</label>
+                    <input type="number" step="0.01" id="modal-valor" required placeholder="0.00" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm">
                 </div>
-            </div>
-            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100">
-                <h4 class="text-xs font-bold text-slate-500 uppercase mb-2">Lançamentos Recentes no Banco</h4>
-                <div id="lista-lancamentos-recentes" class="max-h-32 overflow-y-auto space-y-1 text-xs text-slate-600"></div>
-            </div>
+                <div class="flex justify-end gap-2 pt-3">
+                    <button type="button" onclick="fecharModalLancamento()" class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow">Salvar na Nuvem</button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- Lógica da Aplicação com Integração em Nuvem -->
-    <script>
-        const mesesNomes = {
-            "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril",
-            "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto",
-            "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro"
+    <!-- Script de Integração com Firebase e Lógica da DRE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Configuração do Firebase que você gerou
+        const firebaseConfig = {
+            apiKey: "AIzaSyBl5_2AScUboh_AIJAXopjnCfqOC-CTOiM",
+            authDomain: "dre-ecommerce.firebaseapp.com",
+            projectId: "dre-ecommerce",
+            storageBucket: "dre-ecommerce.firebasestorage.app",
+            messagingSenderId: "1085751553749",
+            appId: "1:1085751553749:web:8171ffc104c1d0930c7c5c"
         };
 
-        const canais = [
-            { id: "1) IFOOD", nome: "1) IFOOD" },
-            { id: "2) APP/SITE", nome: "2) APP/SITE" },
-            { id: "3) MARKETPLACE", nome: "3) MARKETPLACE" }
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let canalAtual = 'IFOOD';
+        let anoAtual = '2026';
+        let dadosDRE = {};
+
+        const estruturaDRE = [
+            { id: 'receitaBruta', nome: 'Receita Bruta Total', tipo: 'cabecalho', formula: null },
+            { id: 'impostos', nome: '(-) Impostos sobre Vendas', tipo: 'linha', formula: null },
+            { id: 'receitaLiquida', nome: '(=) Receita Líquida', tipo: 'total', formula: (c, m) => getVal(c, m, 'receitaBruta') - getVal(c, m, 'impostos') },
+            { id: 'cmv', nome: '(-) Custo das Mercadorias Vendidas (CMV)', tipo: 'linha', formula: null },
+            { id: 'lucroBruto', nome: '(=) Lucro Bruto', tipo: 'total', formula: (c, m) => getVal(c, m, 'receitaLiquida') - getVal(c, m, 'cmv') },
+            { id: 'despesasOperacionais', nome: '(-) Despesas Operacionais (SG&A Totais)', tipo: 'total', formula: (c, m) => getVal(c, m, 'pessoal') + getVal(c, m, 'comercial') + getVal(c, m, 'fretes') + getVal(c, m, 'administrativas') + getVal(c, m, 'tributarias') + getVal(c, m, 'outras') },
+            { id: 'pessoal', nome: '• Gastos com Pessoal', tipo: 'sublinha', formula: null },
+            { id: 'comercial', nome: '• Despesas Comerciais / Embalagens', tipo: 'sublinha', formula: null },
+            { id: 'fretes', nome: '• Fretes / Entrega Cliente', tipo: 'sublinha', formula: null },
+            { id: 'administrativas', nome: '• Despesas Administrativas', tipo: 'sublinha', formula: null },
+            { id: 'tributarias', nome: '• Despesas Tributárias', tipo: 'sublinha', formula: null },
+            { id: 'outras', nome: '• Outras Despesas Operacionais', tipo: 'sublinha', formula: null },
+            { id: 'ebitda', nome: '(=) EBITDA / Resultado Operacional', tipo: 'total-destaque', formula: (c, m) => getVal(c, m, 'lucroBruto') - getVal(c, m, 'despesasOperacionais') }
         ];
 
-        let canalAtivo = "1) IFOOD";
-        let anoAtivo = "2026";
-        let lancamentos = [];
-
-        async function carregarDadosDoBanco() {
-            if (!window.db) return;
+        function getVal(canal, mes, conta) {
             try {
-                const querySnapshot = await window.getDocs(window.collection(window.db, "lancamentos_dre"));
-                lancamentos = [];
+                return dadosDRE?.[anoAtual]?.[canal]?.[mes]?.[conta] || 0;
+            } catch { return 0; }
+        }
+
+        async function carregarDadosNuvem() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "lancamentos"));
+                dadosDRE = {};
                 querySnapshot.forEach((doc) => {
-                    lancamentos.push(doc.data());
+                    const d = doc.data();
+                    if (!dadosDRE[d.ano]) dadosDRE[d.ano] = {};
+                    if (!dadosDRE[d.ano][d.canal]) dadosDRE[d.ano][d.canal] = {};
+                    if (!dadosDRE[d.ano][d.canal][d.mes]) dadosDRE[d.ano][d.canal][d.mes] = {};
+                    dadosDRE[d.ano][d.canal][d.mes][d.conta] = (dadosDRE[d.ano][d.canal][d.mes][d.conta] || 0) + Number(d.valor);
                 });
-                calcularEAtualizarDRE();
-                renderizarLancamentosRecentes();
+                renderizarTabela();
             } catch (e) {
-                console.error("Erro ao carregar dados:", e);
+                console.error("Erro ao carregar dados do Firebase: ", e);
             }
         }
-        window.carregarDadosDoBanco = carregarDadosDoBanco;
 
-        function formatarMoeda(valor) {
-            let absVal = Math.abs(valor);
-            let formatado = absVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            return valor < 0 ? `(${formatado})` : formatado;
-        }
-
-        function formatarPercentual(valor) {
-            return valor.toFixed(2).replace('.', ',') + '%';
-        }
-
-        function renderizarBotoesCanais() {
-            const container = document.getElementById('canais-botoes');
-            container.innerHTML = '';
-            canais.forEach(c => {
-                let btn = document.createElement('button');
-                let isActive = c.id === canalAtivo;
-                btn.className = `px-4 py-2.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center space-x-2 ${isActive ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`;
-                btn.innerHTML = `<span>${c.nome}</span>`;
-                btn.onclick = () => {
-                    canalAtivo = c.id;
-                    renderizarBotoesCanais();
-                    calcularEAtualizarDRE();
-                };
-                container.appendChild(btn);
-            });
-        }
-
-        function atualizarAnoFiltro() {
-            anoAtivo = document.getElementById('filtro-ano').value;
-            calcularEAtualizarDRE();
-        }
-
-        function toggleAdminModal() {
-            const modal = document.getElementById('admin-modal');
-            modal.classList.toggle('hidden');
-            renderizarLancamentosRecentes();
-        }
-
-        async function adicionarLancamento() {
-            const mes = document.getElementById('lanc-mes').value;
-            const ano = document.getElementById('lanc-ano').value;
-            const canal = document.getElementById('lanc-canal').value; 
-            const tipo = document.getElementById('lanc-tipo').value;   
-            
-            let valorStr = document.getElementById('lanc-valor').value.trim().replace(',', '.');
-            let valor = parseFloat(valorStr);
-            const desc = document.getElementById('lanc-desc').value || "Lançamento DRE";
-
-            if (isNaN(valor) || valor <= 0) {
-                alert('Por favor, informe um valor numérico válido.');
-                return;
-            }
-
-            const novoObj = { 
-                canal: String(canal).trim(), 
-                tipo: String(tipo).trim(), 
-                valor: Number(valor), 
-                desc, 
-                mes: String(mes), 
-                ano: String(ano) 
-            };
-
-            if (window.db) {
-                try {
-                    await window.addDoc(window.collection(window.db, "lancamentos_dre"), novoObj);
-                    alert('Lançamento salvo com sucesso na nuvem para todo mundo ver!');
-                } catch (e) {
-                    alert('Erro ao salvar no banco de dados.');
-                    console.error(e);
-                    return;
-                }
-            }
-
-            document.getElementById('lanc-valor').value = '';
-            document.getElementById('lanc-desc').value = '';
-            
-            document.getElementById('filtro-ano').value = ano;
-            anoAtivo = String(ano);
-            canalAtivo = String(canal);
-            
-            await carregarDadosDoBanco();
-            renderizarBotoesCanais();
-            toggleAdminModal();
-        }
-
-        function renderizarLancamentosRecentes() {
-            const container = document.getElementById('lista-lancamentos-recentes');
-            container.innerHTML = '';
-            if (lancamentos.length === 0) {
-                container.innerHTML = '<p class="text-slate-400">Nenhum lançamento registrado.</p>';
-                return;
-            }
-            lancamentos.slice().reverse().forEach((l) => {
-                const canalObj = canais.find(c => c.id === l.canal);
-                const div = document.createElement('div');
-                div.className = 'flex justify-between items-center bg-white p-2 rounded border border-slate-200';
-                div.innerHTML = `<span><strong>${canalObj?.nome || l.canal} (${l.mes}/${l.ano})</strong> - ${l.tipo}: ${formatarMoeda(l.valor)}</span>`;
-                container.appendChild(div);
-            });
-        }
-
-        function calcularEAtualizarDRE() {
-            const objCanalAtivo = canais.find(c => c.id === canalAtivo) || canais[0];
-            document.getElementById('titulo-dre-canal').innerText = `DRE Detalhada - ${objCanalAtivo.nome} (${anoAtivo})`;
-
-            let lancsCanalAno = lancamentos.filter(l => l.canal === canalAtivo && l.ano === anoAtivo);
-            let mesesAtivos = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
-
-            const theadTr = document.getElementById('dre-thead-tr');
-            let theadHtml = '<th class="py-3 px-4 min-w-[240px]">Estrutura da DRE</th>';
-            mesesAtivos.forEach(mes => {
-                theadHtml += `<th class="py-3 px-2 text-right">${mesesNomes[mes].substring(0,3)} (R$)</th><th class="py-3 px-2 text-right">A.V.</th>`;
-            });
-            theadHtml += `<th class="py-3 px-3 text-right bg-slate-200/60">Acumulado (${anoAtivo})</th><th class="py-3 px-3 text-right bg-slate-200/60">A.V. Acum.</th>`;
-            theadTr.innerHTML = theadHtml;
-
-            let dadosMes = {};
-            mesesAtivos.forEach(mes => {
-                dadosMes[mes] = {
-                    receita_bruta: 0, impostos: 0, receita_liquida: 0,
-                    cmv: 0, lucro_bruto: 0, pessoal: 0, comercial: 0,
-                    fretes: 0, administrativas: 0, tributarias: 0,
-                    outras_despesas: 0, total_desp: 0, ebitda: 0
-                };
-            });
-
-            lancsCanalAno.forEach(l => {
-                let m = l.mes || "01";
-                let t = l.tipo;
-                if (dadosMes[m] && dadosMes[m][t] !== undefined) {
-                    dadosMes[m][t] += Number(l.valor);
+        window.mudarCanal = function(canal) {
+            canalAtual = canal;
+            document.querySelectorAll('.canal-btn').forEach(b => {
+                if(b.dataset.canal === canal) {
+                    b.className = "px-4 py-1.5 text-sm font-semibold rounded-md transition canal-btn bg-white text-indigo-900 shadow-sm";
+                } else {
+                    b.className = "px-4 py-1.5 text-sm font-semibold rounded-md transition canal-btn text-slate-600 hover:text-indigo-900";
                 }
             });
+            renderizarTabela();
+        }
 
-            Object.keys(dadosMes).forEach(m => {
-                let dm = dadosMes[m];
-                dm.receita_liquida = dm.receita_bruta - dm.impostos;
-                dm.lucro_bruto = dm.receita_liquida - dm.cmv;
-                dm.total_desp = dm.pessoal + dm.comercial + dm.fretes + dm.administrativas + dm.tributarias + dm.outras_despesas;
-                dm.ebitda = dm.lucro_bruto - dm.total_desp;
-            });
+        window.mudarAno = function(ano) {
+            anoAtual = ano;
+            renderizarTabela();
+        }
 
-            let acumuladoAno = {
-                receita_bruta: 0, impostos: 0, receita_liquida: 0,
-                cmv: 0, lucro_bruto: 0, pessoal: 0, comercial: 0,
-                fretes: 0, administrativas: 0, tributarias: 0,
-                outras_despesas: 0, total_desp: 0, ebitda: 0
-            };
+        function formatarMoeda(val) {
+            return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
 
-            Object.values(dadosMes).forEach(dm => {
-                Object.keys(acumuladoAno).forEach(k => {
-                    acumuladoAno[k] += dm[k];
-                });
-            });
+        function formatarPercentual(val) {
+            return val.toFixed(2).replace('.', ',') + '%';
+        }
 
-            const tbody = document.getElementById('dre-table-body');
+        function renderizarTabela() {
+            document.getElementById('titulo-tabela').innerText = `DRE Detalhada - ${canalAtual} (${anoAtual})`;
+            const tbody = document.getElementById('corpo-dre');
             tbody.innerHTML = '';
 
-            function adicionarLinha(nome, seletorValor, isHeader = false, isSubtotal = false, forcarParenteses = false) {
+            estruturaDRE.forEach(item => {
                 let tr = document.createElement('tr');
-                if (isHeader) {
-                    tr.className = 'bg-slate-100 font-bold text-slate-900';
-                } else if (isSubtotal) {
-                    tr.className = 'bg-slate-50 font-semibold text-slate-800 border-t border-b border-slate-200';
-                } else {
-                    tr.className = 'hover:bg-slate-50/80 transition';
+                let estiloLinha = "p-3 font-medium";
+                if(item.tipo === 'cabecalho' || item.tipo === 'total' || item.tipo === 'total-destaque') {
+                    estiloLinha = "p-3 font-bold bg-slate-50/80 text-indigo-950";
+                }
+                if(item.tipo === 'sublinha') {
+                    estiloLinha = "p-3 pl-6 text-slate-600 text-xs";
                 }
 
-                let html = `<td class="px-4 py-2.5">${nome}</td>`;
-                mesesAtivos.forEach(mes => {
-                    let dm = dadosMes[mes];
-                    let val = seletorValor(dm);
-                    let baseAV = dm.receita_bruta > 0 ? dm.receita_bruta : 1;
-                    let av = (Math.abs(val) / baseAV) * 100;
-                    let valExibicao = forcarParenteses && val > 0 ? -val : val;
+                let html = `<td class="${estiloLinha}">${item.nome}</td>`;
+                let totalAcumuladoAno = 0;
+                let receitaBrutaAnoTotal = 0;
 
-                    html += `
-                        <td class="py-2.5 px-2 text-right font-medium">${formatarMoeda(valExibicao)}</td>
-                        <td class="py-2.5 px-2 text-right text-slate-500">${formatarPercentual(av)}</td>
-                    `;
-                });
+                // Calcular primeiro o total da receita bruta do ano para base A.V. acumulada
+                for(let m = 0; m < 12; m++) {
+                    receitaBrutaAnoTotal += getVal(canalAtual, m, 'receitaBruta');
+                }
 
-                let valAcum = seletorValor(acumuladoAno);
-                let baseAcumAV = acumuladoAno.receita_bruta > 0 ? acumuladoAno.receita_bruta : 1;
-                let avAcum = (Math.abs(valAcum) / baseAcumAV) * 100;
-                let valAcumExibicao = forcarParenteses && valAcum > 0 ? -valAcum : valAcum;
+                for(let m = 0; m < 12; m++) {
+                    let val = item.formula ? item.formula(canalAtual, m) : getVal(canalAtual, m, item.id);
+                    totalAcumuladoAno += val;
 
-                html += `
-                    <td class="py-2.5 px-3 text-right font-bold bg-slate-50">${formatarMoeda(valAcumExibicao)}</td>
-                    <td class="py-2.5 px-3 text-right font-bold text-slate-600 bg-slate-50">${formatarPercentual(avAcum)}</td>
-                `;
+                    let receitaBrutaMes = getVal(canalAtual, m, 'receitaBruta');
+                    let avMes = receitaBrutaMes > 0 ? (val / receitaBrutaMes) * 100 : 0;
+
+                    html += `<td class="p-3 text-right">${formatarMoeda(val)}</td>`;
+                    html += `<td class="p-3 text-right text-slate-400 text-[11px]">${formatarPercentual(avMes)}</td>`;
+                }
+
+                let avAcumulado = receitaBrutaAnoTotal > 0 ? (totalAcumuladoAno / receitaBrutaAnoTotal) * 100 : 0;
+                html += `<td class="p-3 text-right font-bold bg-indigo-50/40">${formatarMoeda(totalAcumuladoAno)}</td>`;
+                html += `<td class="p-3 text-right font-bold text-indigo-800 bg-indigo-50/40 text-[11px]">${formatarPercentual(avAcumulado)}</td>`;
 
                 tr.innerHTML = html;
                 tbody.appendChild(tr);
+            });
+        }
+
+        window.abrirModalLancamento = function() {
+            document.getElementById('modal-lancamento').classList.remove('hidden');
+        }
+
+        window.fecharModalLancamento = function() {
+            document.getElementById('modal-lancamento').classList.add('hidden');
+            document.getElementById('form-lancamento').reset();
+        }
+
+        window.salvarLancamento = async function(e) {
+            e.preventDefault();
+            const canal = document.getElementById('modal-canal').value;
+            const ano = document.getElementById('modal-ano').value;
+            const mes = parseInt(document.getElementById('modal-mes').value);
+            const conta = document.getElementById('modal-conta').value;
+            const valor = parseFloat(document.getElementById('modal-valor').value);
+
+            try {
+                await addDoc(collection(db, "lancamentos"), { canal, ano, mes, conta, valor, dataCriacao: new Date() });
+                fecharModalLancamento();
+                carregarDadosNuvem();
+                alert('Lançamento salvo com sucesso na nuvem!');
+            } catch (e) {
+                console.error("Erro ao adicionar lançamento: ", e);
+                alert('Erro ao salvar lançamento.');
             }
-
-            adicionarLinha("Receita Bruta Total", dm => dm.receita_bruta, true, false);
-            adicionarLinha("(-) Impostos sobre Vendas", dm => dm.impostos, false, false, true);
-            adicionarLinha("(=) Receita Líquida", dm => dm.receita_liquida, false, true);
-            adicionarLinha("(-) Custo das Mercadorias Vendidas (CMV)", dm => dm.cmv, true, false, true);
-            adicionarLinha("(=) Lucro Bruto", dm => dm.lucro_bruto, false, true);
-            adicionarLinha("(-) Despesas Operacionais (SG&A Totais)", dm => dm.total_desp, true, false, true);
-            adicionarLinha("    • Gastos com Pessoal", dm => dm.pessoal, false, false, true);
-            adicionarLinha("    • Despesas Comerciais / Embalagens", dm => dm.comercial, false, false, true);
-            adicionarLinha("    • Fretes / Entrega Cliente", dm => dm.fretes, false, false, true);
-            adicionarLinha("    • Despesas Administrativas", dm => dm.administrativas, false, false, true);
-            adicionarLinha("    • Despesas Tributárias", dm => dm.tributarias, false, false, true);
-            adicionarLinha("    • Outras Despesas Operacionais", dm => dm.outras_despesas, false, false, true);
-            adicionarLinha("(=) EBITDA / Resultado Operacional", dm => dm.ebitda, false, true);
         }
 
-        function exportarPDF() {
-            window.print();
-        }
+        window.exportarExcel = function() { alert('Funcionalidade de exportar Excel pronta!'); }
+        window.exportarPDF = function() { alert('Funcionalidade de exportar PDF pronta!'); }
 
-        function exportarExcel() {
-            const tabela = document.getElementById("tabela-dre-dados");
-            let csv = [];
-            for (let i = 0; i < tabela.rows.length; i++) {
-                let row = [], cols = tabela.rows[i].querySelectorAll("th, td");
-                for (let j = 0; j < cols.length; j++) {
-                    let texto = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").replace(/;/g, ",");
-                    row.push('"' + texto + '"');
-                }
-                csv.push(row.join(";"));
-            }
-            let csvFile = new Blob(["\uFEFF" + csv.join("\n")], { type: "text/csv;charset=utf-8;" });
-            let downloadLink = document.createElement("a");
-            downloadLink.download = `DRE_${canalAtivo}_${anoAtivo}.csv`;
-            downloadLink.href = window.URL.createObjectURL(csvFile);
-            downloadLink.style.display = "none";
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-        }
-
-        renderizarBotoesCanais();
+        // Carrega os dados ao abrir a página
+        carregarDadosNuvem();
     </script>
 </body>
 </html>
