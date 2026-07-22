@@ -20,7 +20,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-bold tracking-tight">DRE Individualizada por Canal</h1>
-                    <p class="text-xs text-slate-400">Visão Anual, Mês a Mês, Análise Vertical e Acumulado</p>
+                    <p class="text-xs text-slate-400">Visão Anual, Mês a Mês, Análise Vertical e Acumulado (Nuvem Compartilhada)</p>
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-2">
@@ -97,7 +97,6 @@
                 <h3 class="font-bold text-base"><i class="fa-solid fa-pen-to-square mr-2"></i> Novo Lançamento na DRE</h3>
                 <button onclick="toggleAdminModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            
             <div class="p-6 space-y-4">
                 <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -175,8 +174,11 @@
         </div>
     </div>
 
-    <!-- Lógica da Aplicação -->
+    <!-- Lógica da Aplicação com JSONBin Integrado -->
     <script>
+        const BIN_ID = "6a60f751da38895dfe805e30";
+        const API_KEY = "$2a$10$2gRuysiXM85zMZ4OTG2dU.AEaN0WyPHJveZ2wy62/tqidY73EOJBS";
+
         const mesesNomes = {
             "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril",
             "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto",
@@ -191,9 +193,43 @@
 
         let canalAtivo = "1) IFOOD";
         let anoAtivo = "2026";
-        let lancamentos = JSON.parse(localStorage.getItem('dre_canais_v3_lanc')) || [];
+        let lancamentos = [];
 
-        // SENHA CONFIGURADA PARA "0"
+        // Carregar dados da nuvem ao iniciar
+        async function carregarDadosDaNuvem() {
+            try {
+                let resposta = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+                    headers: { 'X-Master-Key': API_KEY }
+                });
+                if (resposta.ok) {
+                    let resultado = await resposta.json();
+                    if (resultado.record && Array.isArray(resultado.record.lancamentos)) {
+                        lancamentos = resultado.record.lancamentos;
+                    }
+                }
+            } catch (e) {
+                console.error("Erro ao carregar da nuvem, usando dados vazios.", e);
+            }
+            renderizarBotoesCanais();
+            calcularEAtualizarDRE();
+        }
+
+        // Salvar dados na nuvem
+        async function salvarDadosNaNuvem() {
+            try {
+                await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': API_KEY
+                    },
+                    body: JSON.stringify({ lancamentos: lancamentos })
+                });
+            } catch (e) {
+                console.error("Erro ao salvar na nuvem.", e);
+            }
+        }
+
         function tentarAbrirAdmin() {
             let senha = prompt("Acesso restrito. Digite a senha para realizar o lançamento:");
             if (senha === "0") {
@@ -241,7 +277,7 @@
             renderizarLancamentosRecentes();
         }
 
-        function adicionarLancamento() {
+        async function adicionarLancamento() {
             const mes = document.getElementById('lanc-mes').value;
             const ano = document.getElementById('lanc-ano').value;
             const canal = document.getElementById('lanc-canal').value;
@@ -264,22 +300,22 @@
                 ano: String(ano)
             });
 
-            localStorage.setItem('dre_canais_v3_lanc', JSON.stringify(lancamentos));
-            
+            await salvarDadosNaNuvem();
+
             document.getElementById('lanc-valor').value = '';
             document.getElementById('lanc-desc').value = '';
             document.getElementById('filtro-ano').value = ano;
             anoAtivo = String(ano);
             canalAtivo = String(canal);
-            
+
             renderizarBotoesCanais();
             calcularEAtualizarDRE();
             toggleAdminModal();
         }
 
-        function removerLancamento(index) {
+        async function removerLancamento(index) {
             lancamentos.splice(index, 1);
-            localStorage.setItem('dre_canais_v3_lanc', JSON.stringify(lancamentos));
+            await salvarDadosNaNuvem();
             renderizarLancamentosRecentes();
             calcularEAtualizarDRE();
         }
@@ -369,13 +405,13 @@
                 }
 
                 let html = `<td class="px-4 py-2.5">${nome}</td>`;
-                
                 mesesAtivos.forEach(mes => {
                     let dm = dadosMes[mes];
                     let val = seletorValor(dm);
                     let baseAV = dm.receita_liquida > 0 ? dm.receita_liquida : 1;
                     let av = (Math.abs(val) / baseAV) * 100;
                     let valExibicao = forcarParenteses && val > 0 ? -val : val;
+
                     html += `
                         <td class="py-2.5 px-2 text-right font-medium">${formatarMoeda(valExibicao)}</td>
                         <td class="py-2.5 px-2 text-right text-slate-500">${formatarPercentual(av)}</td>
@@ -411,9 +447,7 @@
             adicionarLinha("(=) EBITDA / Resultado Operacional", dm => dm.ebitda, false, true);
         }
 
-        function exportarPDF() {
-            window.print();
-        }
+        function exportarPDF() { window.print(); }
 
         function exportarExcel() {
             const tabela = document.getElementById("tabela-dre-dados");
@@ -436,8 +470,8 @@
             document.body.removeChild(downloadLink);
         }
 
-        renderizarBotoesCanais();
-        calcularEAtualizarDRE();
+        // Inicializar buscando os dados na nuvem
+        carregarDadosDaNuvem();
     </script>
 </body>
 </html>
