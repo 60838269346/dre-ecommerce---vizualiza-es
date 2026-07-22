@@ -181,7 +181,6 @@
     <!-- Lógica da Aplicação com Nuvem Web em Tempo Real -->
     <script>
         // CONFIGURAÇÃO DA NUVEM WEB GRATUITA (Firebase Realtime Database)
-        // Crie um projeto gratuito em https://console.firebase.google.com/ e cole suas credenciais abaixo:
         const firebaseConfig = {
             apiKey: "SUA_API_KEY_AQUI",
             authDomain: "seu-projeto.firebaseapp.com",
@@ -192,7 +191,6 @@
             appId: "1:000:web:000"
         };
 
-        // Inicializa o banco de dados web em nuvem
         let db;
         try {
             firebase.initializeApp(firebaseConfig);
@@ -217,7 +215,6 @@
         let anoAtivo = "2026";
         let lancamentos = [];
 
-        // SINCRONIZAÇÃO EM TEMPO REAL NA WEB
         function iniciarSincronizacaoNuvem() {
             if (db) {
                 db.ref('lancamentos').on('value', (snapshot) => {
@@ -234,17 +231,16 @@
                     renderizarLancamentosRecentes();
                 });
             } else {
-                // Fallback local se não configurar o Firebase
                 lancamentos = JSON.parse(localStorage.getItem('dre_canais_v3_lanc')) || [];
                 calcularEAtualizarDRE();
                 renderizarLancamentosRecentes();
             }
         }
 
-        // SENHA DE SEGURANÇA PARA LANÇAMENTOS
+        // SENHA CONFIGURADA PARA "0"
         function tentarAbrirAdmin() {
             let senha = prompt("Acesso restrito. Digite a senha para realizar o lançamento:");
-            if (senha === "sua_senha_aqui") { // Altere para a sua senha desejada
+            if (senha === "0") {
                 toggleAdminModal();
             } else if (senha !== null) {
                 alert("Senha incorreta! Apenas você pode realizar lançamentos.");
@@ -313,7 +309,6 @@
             };
 
             if (db) {
-                // Envia direto para a nuvem web em tempo real
                 db.ref('lancamentos').push(novoItem);
             } else {
                 lancamentos.push(novoItem);
