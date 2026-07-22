@@ -8,9 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
-    <!-- Firebase SDK (Realtime Database para nuvem web em tempo real) -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans">
 
@@ -178,27 +175,8 @@
         </div>
     </div>
 
-    <!-- Lógica da Aplicação com Nuvem Web em Tempo Real -->
+    <!-- Lógica da Aplicação -->
     <script>
-        // CONFIGURAÇÃO DA NUVEM WEB GRATUITA (Firebase Realtime Database)
-        const firebaseConfig = {
-            apiKey: "SUA_API_KEY_AQUI",
-            authDomain: "seu-projeto.firebaseapp.com",
-            databaseURL: "https://seu-projeto-default-rtdb.firebaseio.com",
-            projectId: "seu-projeto",
-            storageBucket: "seu-projeto.appspot.com",
-            messagingSenderId: "0000000000",
-            appId: "1:000:web:000"
-        };
-
-        let db;
-        try {
-            firebase.initializeApp(firebaseConfig);
-            db = firebase.database();
-        } catch (e) {
-            console.warn("Firebase não configurado. Ativando modo local de emergência.");
-        }
-
         const mesesNomes = {
             "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril",
             "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto",
@@ -213,29 +191,7 @@
 
         let canalAtivo = "1) IFOOD";
         let anoAtivo = "2026";
-        let lancamentos = [];
-
-        function iniciarSincronizacaoNuvem() {
-            if (db) {
-                db.ref('lancamentos').on('value', (snapshot) => {
-                    const data = snapshot.val();
-                    if (data) {
-                        lancamentos = Object.keys(data).map(key => ({
-                            idKey: key,
-                            ...data[key]
-                        }));
-                    } else {
-                        lancamentos = [];
-                    }
-                    calcularEAtualizarDRE();
-                    renderizarLancamentosRecentes();
-                });
-            } else {
-                lancamentos = JSON.parse(localStorage.getItem('dre_canais_v3_lanc')) || [];
-                calcularEAtualizarDRE();
-                renderizarLancamentosRecentes();
-            }
-        }
+        let lancamentos = JSON.parse(localStorage.getItem('dre_canais_v3_lanc')) || [];
 
         // SENHA CONFIGURADA PARA "0"
         function tentarAbrirAdmin() {
@@ -299,23 +255,16 @@
                 return;
             }
 
-            const novoItem = {
+            lancamentos.push({
                 canal: String(canal).trim(),
                 tipo: String(tipo).trim(),
                 valor: Number(valor),
                 desc,
                 mes: String(mes),
                 ano: String(ano)
-            };
+            });
 
-            if (db) {
-                db.ref('lancamentos').push(novoItem);
-            } else {
-                lancamentos.push(novoItem);
-                localStorage.setItem('dre_canais_v3_lanc', JSON.stringify(lancamentos));
-                calcularEAtualizarDRE();
-                renderizarLancamentosRecentes();
-            }
+            localStorage.setItem('dre_canais_v3_lanc', JSON.stringify(lancamentos));
             
             document.getElementById('lanc-valor').value = '';
             document.getElementById('lanc-desc').value = '';
@@ -324,18 +273,15 @@
             canalAtivo = String(canal);
             
             renderizarBotoesCanais();
+            calcularEAtualizarDRE();
             toggleAdminModal();
         }
 
-        function removerLancamento(idKey, indexLocal) {
-            if (db && idKey) {
-                db.ref('lancamentos/' + idKey).remove();
-            } else {
-                lancamentos.splice(indexLocal, 1);
-                localStorage.setItem('dre_canais_v3_lanc', JSON.stringify(lancamentos));
-                renderizarLancamentosRecentes();
-                calcularEAtualizarDRE();
-            }
+        function removerLancamento(index) {
+            lancamentos.splice(index, 1);
+            localStorage.setItem('dre_canais_v3_lanc', JSON.stringify(lancamentos));
+            renderizarLancamentosRecentes();
+            calcularEAtualizarDRE();
         }
 
         function renderizarLancamentosRecentes() {
@@ -350,7 +296,7 @@
                 const canalObj = canais.find(c => c.id === l.canal);
                 const div = document.createElement('div');
                 div.className = 'flex justify-between items-center bg-white p-2 rounded border border-slate-200';
-                div.innerHTML = `<span><strong>${canalObj?.nome || l.canal} (${l.mes}/${l.ano})</strong> - ${l.tipo}: ${formatarMoeda(l.valor)}</span> <button onclick="removerLancamento('${l.idKey || ''}', ${realIdx})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>`;
+                div.innerHTML = `<span><strong>${canalObj?.nome || l.canal} (${l.mes}/${l.ano})</strong> - ${l.tipo}: ${formatarMoeda(l.valor)}</span> <button onclick="removerLancamento(${realIdx})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>`;
                 container.appendChild(div);
             });
         }
@@ -491,7 +437,7 @@
         }
 
         renderizarBotoesCanais();
-        iniciarSincronizacaoNuvem();
+        calcularEAtualizarDRE();
     </script>
 </body>
 </html>
