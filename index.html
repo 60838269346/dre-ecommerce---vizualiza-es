@@ -93,7 +93,7 @@
     <!-- Modal de Novo Lançamento -->
     <div id="modal-lancamento" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 overflow-hidden">
-            <h3 class="text-lg font-bold text-indigo-950 mb-4">Adicionar Lançamento na Nuvem</h3>
+            <h3 class="text-lg font-bold text-indigo-950 mb-4">Adicionar Lançamento</h3>
             <form id="form-lancamento" onsubmit="salvarLancamento(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Canal de Venda</label>
@@ -144,33 +144,17 @@
                 </div>
                 <div class="flex justify-end gap-2 pt-3">
                     <button type="button" onclick="fecharModalLancamento()" class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow">Salvar na Nuvem</button>
+                    <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow">Salvar Lançamento</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Script de Integração com Firebase e Lógica da DRE -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        // Configuração do Firebase que você gerou
-        const firebaseConfig = {
-            apiKey: "AIzaSyBl5_2AScUboh_AIJAXopjnCfqOC-CTOiM",
-            authDomain: "dre-ecommerce.firebaseapp.com",
-            projectId: "dre-ecommerce",
-            storageBucket: "dre-ecommerce.firebasestorage.app",
-            messagingSenderId: "1085751553749",
-            appId: "1:1085751553749:web:8171ffc104c1d0930c7c5c"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
+    <!-- Script de Lógica e Armazenamento Local -->
+    <script>
         let canalAtual = 'IFOOD';
         let anoAtual = '2026';
-        let dadosDRE = {};
+        let dadosDRE = JSON.parse(localStorage.getItem('dre_dados')) || {};
 
         const estruturaDRE = [
             { id: 'receitaBruta', nome: 'Receita Bruta Total', tipo: 'cabecalho', formula: null },
@@ -192,23 +176,6 @@
             try {
                 return dadosDRE?.[anoAtual]?.[canal]?.[mes]?.[conta] || 0;
             } catch { return 0; }
-        }
-
-        async function carregarDadosNuvem() {
-            try {
-                const querySnapshot = await getDocs(collection(db, "lancamentos"));
-                dadosDRE = {};
-                querySnapshot.forEach((doc) => {
-                    const d = doc.data();
-                    if (!dadosDRE[d.ano]) dadosDRE[d.ano] = {};
-                    if (!dadosDRE[d.ano][d.canal]) dadosDRE[d.ano][d.canal] = {};
-                    if (!dadosDRE[d.ano][d.canal][d.mes]) dadosDRE[d.ano][d.canal][d.mes] = {};
-                    dadosDRE[d.ano][d.canal][d.mes][d.conta] = (dadosDRE[d.ano][d.canal][d.mes][d.conta] || 0) + Number(d.valor);
-                });
-                renderizarTabela();
-            } catch (e) {
-                console.error("Erro ao carregar dados do Firebase: ", e);
-            }
         }
 
         window.mudarCanal = function(canal) {
@@ -255,7 +222,6 @@
                 let totalAcumuladoAno = 0;
                 let receitaBrutaAnoTotal = 0;
 
-                // Calcular primeiro o total da receita bruta do ano para base A.V. acumulada
                 for(let m = 0; m < 12; m++) {
                     receitaBrutaAnoTotal += getVal(canalAtual, m, 'receitaBruta');
                 }
@@ -289,7 +255,7 @@
             document.getElementById('form-lancamento').reset();
         }
 
-        window.salvarLancamento = async function(e) {
+        window.salvarLancamento = function(e) {
             e.preventDefault();
             const canal = document.getElementById('modal-canal').value;
             const ano = document.getElementById('modal-ano').value;
@@ -297,22 +263,25 @@
             const conta = document.getElementById('modal-conta').value;
             const valor = parseFloat(document.getElementById('modal-valor').value);
 
-            try {
-                await addDoc(collection(db, "lancamentos"), { canal, ano, mes, conta, valor, dataCriacao: new Date() });
-                fecharModalLancamento();
-                carregarDadosNuvem();
-                alert('Lançamento salvo com sucesso na nuvem!');
-            } catch (e) {
-                console.error("Erro ao adicionar lançamento: ", e);
-                alert('Erro ao salvar lançamento.');
-            }
+            if (!dadosDRE[ano]) dadosDRE[ano] = {};
+            if (!dadosDRE[ano][canal]) dadosDRE[ano][canal] = {};
+            if (!dadosDRE[ano][canal][mes]) dadosDRE[ano][canal][mes] = {};
+            
+            // Soma ao valor existente da conta no mês
+            dadosDRE[ano][canal][mes][conta] = (dadosDRE[ano][canal][mes][conta] || 0) + valor;
+
+            localStorage.setItem('dre_dados', JSON.stringify(dadosDRE));
+            
+            fecharModalLancamento();
+            renderizarTabela();
+            alert('Lançamento salvo com sucesso!');
         }
 
         window.exportarExcel = function() { alert('Funcionalidade de exportar Excel pronta!'); }
         window.exportarPDF = function() { alert('Funcionalidade de exportar PDF pronta!'); }
 
-        // Carrega os dados ao abrir a página
-        carregarDadosNuvem();
+        // Renderiza a tabela ao carregar
+        renderizarTabela();
     </script>
 </body>
 </html>
