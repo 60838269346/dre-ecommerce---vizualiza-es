@@ -169,7 +169,7 @@
         </div>
     </div>
 
-    <!-- Script Corrigido com Tratamento de Deduções -->
+    <!-- Script Corrigido -->
     <script>
         let canalAtual = 'IFOOD';
         let anoAtual = '2026';
@@ -188,7 +188,6 @@
             'outras': '• Outras Despesas Operacionais'
         };
 
-        // Retorna a soma absoluta ou com sinal tratado para deduções
         function getVal(canal, mes, conta) {
             let soma = 0;
             listaLancamentos.forEach(l => {
@@ -305,7 +304,7 @@
 
                 for(let m = 0; m < 12; m++) {
                     let val = item.formula ? item.formula(canalAtual, m) : getVal(canalAtual, m, item.id);
-                    if (item.deducao && val > 0) val = -val; // força exibição negativa para contas dedutivas
+                    if (item.deducao && val > 0) val = -val; 
                     totalAcumuladoAno += val;
 
                     let receitaBrutaMes = getVal(canalAtual, m, 'receitaBruta');
@@ -334,7 +333,6 @@
             }
             listaLancamentos.forEach((l, index) => {
                 let tr = document.createElement('tr');
-                let ehDeducao = l.conta !== 'receitaBruta';
                 tr.innerHTML = `
                     <td class="p-2 text-slate-400">#${index + 1}</td>
                     <td class="p-2 font-semibold">${l.canal}</td>
