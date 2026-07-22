@@ -1,389 +1,248 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DRE por Canal - Visão por Ano, Mês a Mês e Acumulado</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .table-container { overflow-x: auto; }
-        table th, table td { white-space: nowrap; }
-    </style>
-</head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
-    <!-- Cabeçalho -->
-    <header class="bg-indigo-900 text-white shadow-md py-4 px-6 mb-6">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <div>
-                <h1 class="text-2xl font-bold">DRE Individualizada por Canal</h1>
-                <p class="text-xs text-indigo-200">Visão Anual, Mês a Mês, Análise Vertical e Acumulado</p>
-            </div>
-            <div class="flex items-center gap-3">
-                <button onclick="exportarExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-4 py-2 rounded shadow transition">Baixar Excel</button>
-                <button onclick="exportarPDF()" class="bg-rose-600 hover:bg-rose-700 text-white text-sm px-4 py-2 rounded shadow transition">Baixar PDF</button>
-                <button onclick="abrirModalLancamento()" class="bg-amber-500 hover:bg-amber-600 text-indigo-950 font-bold text-sm px-4 py-2 rounded shadow transition">Novo Lançamento</button>
-            </div>
-        </div>
-    </header>
+<script>
+    let canalAtual = 'IFOOD';
+    let anoAtual = '2026';
+    let listaLancamentos = JSON.parse(localStorage.getItem('dre_lancamentos')) || [];
 
-    <!-- Conteúdo Principal -->
-    <main class="max-w-7xl mx-auto px-4 flex-grow w-full pb-12">
-        <!-- Filtros e Seletores -->
-        <div class="bg-white p-4 rounded-xl shadow-sm mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-2">
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Canal:</span>
-                <div class="inline-flex rounded-lg p-1 bg-slate-100" id="botoes-canal">
-                    <button onclick="mudarCanal('IFOOD')" class="px-4 py-1.5 text-sm font-semibold rounded-md transition canal-btn bg-white text-indigo-900 shadow-sm" data-canal="IFOOD">1) IFOOD</button>
-                    <button onclick="mudarCanal('APPSITE')" class="px-4 py-1.5 text-sm font-semibold rounded-md transition canal-btn text-slate-600 hover:text-indigo-900" data-canal="APPSITE">2) APP/SITE</button>
-                    <button onclick="mudarCanal('MARKETPLACE')" class="px-4 py-1.5 text-sm font-semibold rounded-md transition canal-btn text-slate-600 hover:text-indigo-900" data-canal="MARKETPLACE">3) MARKETPLACE</button>
-                </div>
-            </div>
-            <div class="flex items-center gap-2">
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Exercício (Ano):</span>
-                <select id="filtro-ano" onchange="mudarAno(this.value)" class="bg-slate-100 border border-slate-300 text-slate-800 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2">
-                    <option value="2026">2026</option>
-                    <option value="2025">2025</option>
-                    <option value="2024">2024</option>
-                </select>
-            </div>
-        </div>
+    const nomesMeses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    
+    const nomesContas = {
+        'receitaBruta': 'Receita Bruta Total',
+        'impostos': '(-) Impostos sobre Vendas',
+        'cmv': '(-) Custo das Mercadorias Vendidas (CMV)',
+        'pessoal': '• Gastos com Pessoal',
+        'comercial': '• Despesas Comerciais / Embalagens',
+        'fretes': '• Fretes / Entrega Cliente',
+        'administrativas': '• Despesas Administrativas',
+        'tributarias': '• Despesas Tributárias',
+        'outras': '• Outras Despesas Operacionais'
+    };
 
-        <!-- Tabela DRE -->
-        <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200 mb-8">
-            <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                <h3 id="titulo-tabela" class="font-bold text-lg text-indigo-950">DRE Detalhada - IFOOD (2026)</h3>
-                <span class="text-xs text-slate-500 bg-slate-200/60 px-2.5 py-1 rounded-full font-medium">Base A.V.: Receita Bruta do Canal (100%)</span>
-            </div>
-            <div class="table-container">
-                <table class="w-full text-left border-collapse text-xs">
-                    <thead>
-                        <tr class="bg-slate-100/80 text-slate-700 uppercase tracking-wider border-b border-slate-200">
-                            <th class="p-3 font-bold">Estrutura da DRE</th>
-                            <th class="p-3 text-right">Jan (R$)</th><th class="p-3 text-right">A.V.</th>
-                            <th class="p-3 text-right">Fev (R$)</th><th class="p-3 text-right">A.V.</th>
-                            <th class="p-3 text-right">Mar (R$)</th><th class="p-3 text-right">A.V.</th>
-                            <th class="p-3 text-right">Abr (R$)</th><th class="p-3 text-right">A.V.</th>
-                            <th class="p-3 text-right">Mai (R$)</th><th class="p-3 text-right">A.V.</th>
-                            <th class="p-3 text-right">Jun (R$)</th><th class="p-3 text-right">A.V.</th>
-                            <th class="p-3 text-right">Jul (R$)</th><th class="p-3 text-right">A.V.</th>
-                            <th class="p-3 text-right">Ago (R$)</th><th class="p-3 text-right">A.V.</th>
-                            <th class="p-3 text-right">Set (R$)</th><th class="p-3 text-right">A.V.</th>
-                            <th class="p-3 text-right">Out (R$)</th><th class="p-3 text-right">A.V.</th>
-                            <th class="p-3 text-right">Nov (R$)</th><th class="p-3 text-right">A.V.</th>
-                            <th class="p-3 text-right">Dez (R$)</th><th class="p-3 text-right">A.V.</th>
-                            <th class="p-3 text-right bg-indigo-50/50">Acumulado</th><th class="p-3 text-right bg-indigo-50/50">A.V. Acum.</th>
-                        </tr>
-                    </thead>
-                    <tbody id="corpo-dre" class="divide-y divide-slate-100 text-slate-700">
-                        <!-- Preenchido via JS -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Seção de Histórico de Lançamentos -->
-        <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200 p-4">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-md text-indigo-950">Lançamentos Realizados (Histórico)</h3>
-                <span class="text-xs text-slate-500">Você pode excluir qualquer lançamento abaixo se precisar corrigir.</span>
-            </div>
-            <div class="table-container">
-                <table class="w-full text-left border-collapse text-xs">
-                    <thead>
-                        <tr class="bg-slate-100 text-slate-700 uppercase tracking-wider border-b">
-                            <th class="p-2">ID</th>
-                            <th class="p-2">Canal</th>
-                            <th class="p-2">Ano</th>
-                            <th class="p-2">Mês</th>
-                            <th class="p-2">Conta da DRE</th>
-                            <th class="p-2 text-right">Valor</th>
-                            <th class="p-2 text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="lista-lancamentos" class="divide-y divide-slate-100">
-                        <!-- Preenchido via JS -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </main>
-
-    <!-- Modal de Novo Lançamento -->
-    <div id="modal-lancamento" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 overflow-hidden">
-            <h3 class="text-lg font-bold text-indigo-950 mb-4">Adicionar Lançamento</h3>
-            <form id="form-lancamento" onsubmit="salvarLancamento(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Canal de Venda</label>
-                    <select id="modal-canal" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm">
-                        <option value="IFOOD">1) IFOOD</option>
-                        <option value="APPSITE">2) APP/SITE</option>
-                        <option value="MARKETPLACE">3) MARKETPLACE</option>
-                    </select>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Ano</label>
-                        <select id="modal-ano" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm">
-                            <option value="2026">2026</option>
-                            <option value="2025">2025</option>
-                            <option value="2024">2024</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Mês</label>
-                        <select id="modal-mes" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm">
-                            <option value="0">Janeiro</option><option value="1">Fevereiro</option>
-                            <option value="2">Março</option><option value="3">Abril</option>
-                            <option value="4">Maio</option><option value="5">Junho</option>
-                            <option value="6">Julho</option><option value="7">Agosto</option>
-                            <option value="8">Setembro</option><option value="9">Outubro</option>
-                            <option value="10">Novembro</option><option value="11">Dezembro</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Conta da DRE</label>
-                    <select id="modal-conta" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm">
-                        <option value="receitaBruta">Receita Bruta Total</option>
-                        <option value="impostos">(-) Impostos sobre Vendas</option>
-                        <option value="cmv">(-) Custo das Mercadorias Vendidas (CMV)</option>
-                        <option value="pessoal">• Gastos com Pessoal</option>
-                        <option value="comercial">• Despesas Comerciais / Embalagens</option>
-                        <option value="fretes">• Fretes / Entrega Cliente</option>
-                        <option value="administrativas">• Despesas Administrativas</option>
-                        <option value="tributarias">• Despesas Tributárias</option>
-                        <option value="outras">• Outras Despesas Operacionais</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Valor (R$)</label>
-                    <input type="number" step="0.01" id="modal-valor" required placeholder="0.00" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm">
-                </div>
-                <div class="flex justify-end gap-2 pt-3">
-                    <button type="button" onclick="fecharModalLancamento()" class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow">Salvar Lançamento</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Script Corrigido -->
-    <script>
-        let canalAtual = 'IFOOD';
-        let anoAtual = '2026';
-        let listaLancamentos = JSON.parse(localStorage.getItem('dre_lancamentos')) || [];
-
-        const nomesMeses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-        const nomesContas = {
-            'receitaBruta': 'Receita Bruta Total',
-            'impostos': '(-) Impostos sobre Vendas',
-            'cmv': '(-) Custo das Mercadorias Vendidas (CMV)',
-            'pessoal': '• Gastos com Pessoal',
-            'comercial': '• Despesas Comerciais / Embalagens',
-            'fretes': '• Fretes / Entrega Cliente',
-            'administrativas': '• Despesas Administrativas',
-            'tributarias': '• Despesas Tributárias',
-            'outras': '• Outras Despesas Operacionais'
-        };
-
-        function getVal(canal, mes, conta) {
-            let soma = 0;
-            listaLancamentos.forEach(l => {
-                if (l.ano === anoAtual && l.canal === canal && l.mes === mes && l.conta === conta) {
-                    soma += Number(l.valor) || 0;
-                }
-            });
-            return soma;
-        }
-
-        const estruturaDRE = [
-            { id: 'receitaBruta', nome: 'Receita Bruta Total', tipo: 'cabecalho', formula: null },
-            { id: 'impostos', nome: '(-) Impostos sobre Vendas', tipo: 'linha', formula: null, deducao: true },
-            { 
-                id: 'receitaLiquida', 
-                nome: '(=) Receita Líquida', 
-                tipo: 'total', 
-                formula: (c, m) => getVal(c, m, 'receitaBruta') - Math.abs(getVal(c, m, 'impostos')) 
-            },
-            { id: 'cmv', nome: '(-) Custo das Mercadorias Vendidas (CMV)', tipo: 'linha', formula: null, deducao: true },
-            { 
-                id: 'lucroBruto', 
-                nome: '(=) Lucro Bruto', 
-                tipo: 'total', 
-                formula: (c, m) => {
-                    let recLiq = getVal(c, m, 'receitaBruta') - Math.abs(getVal(c, m, 'impostos'));
-                    let custoMv = Math.abs(getVal(c, m, 'cmv'));
-                    return recLiq - custoMv;
-                }
-            },
-            { 
-                id: 'despesasOperacionais', 
-                nome: '(-) Despesas Operacionais (SG&A Totais)', 
-                tipo: 'total', 
-                formula: (c, m) => Math.abs(getVal(c, m, 'pessoal')) + Math.abs(getVal(c, m, 'comercial')) + Math.abs(getVal(c, m, 'fretes')) + Math.abs(getVal(c, m, 'administrativas')) + Math.abs(getVal(c, m, 'tributarias')) + Math.abs(getVal(c, m, 'outras'))
-            },
-            { id: 'pessoal', nome: '• Gastos com Pessoal', tipo: 'sublinha', formula: null, deducao: true },
-            { id: 'comercial', nome: '• Despesas Comerciais / Embalagens', tipo: 'sublinha', formula: null, deducao: true },
-            { id: 'fretes', nome: '• Fretes / Entrega Cliente', tipo: 'sublinha', formula: null, deducao: true },
-            { id: 'administrativas', nome: '• Despesas Administrativas', tipo: 'sublinha', formula: null, deducao: true },
-            { id: 'tributarias', nome: '• Despesas Tributárias', tipo: 'sublinha', formula: null, deducao: true },
-            { id: 'outras', nome: '• Outras Despesas Operacionais', tipo: 'sublinha', formula: null, deducao: true },
-            { 
-                id: 'ebitda', 
-                nome: '(=) EBITDA / Resultado Operacional', 
-                tipo: 'total-destaque', 
-                formula: (c, m) => {
-                    let recLiq = getVal(c, m, 'receitaBruta') - Math.abs(getVal(c, m, 'impostos'));
-                    let lucroB = recLiq - Math.abs(getVal(c, m, 'cmv'));
-                    let desps = Math.abs(getVal(c, m, 'pessoal')) + Math.abs(getVal(c, m, 'comercial')) + Math.abs(getVal(c, m, 'fretes')) + Math.abs(getVal(c, m, 'administrativas')) + Math.abs(getVal(c, m, 'tributarias')) + Math.abs(getVal(c, m, 'outras'));
-                    return lucroB - desps;
-                }
+    function getVal(canal, mes, conta) {
+        let soma = 0;
+        listaLancamentos.forEach(l => {
+            if (l.ano === anoAtual && l.canal === canal && l.mes === mes && l.conta === conta) {
+                soma += Number(l.valor) || 0;
             }
-        ];
+        });
+        return soma;
+    }
 
-        window.mudarCanal = function(canal) {
-            canalAtual = canal;
-            document.querySelectorAll('.canal-btn').forEach(b => {
-                if(b.dataset.canal === canal) {
-                    b.className = "px-4 py-1.5 text-sm font-semibold rounded-md transition canal-btn bg-white text-indigo-900 shadow-sm";
-                } else {
-                    b.className = "px-4 py-1.5 text-sm font-semibold rounded-md transition canal-btn text-slate-600 hover:text-indigo-900";
-                }
-            });
-            renderizarTabela();
+    const estruturaDRE = [
+        { id: 'receitaBruta', nome: 'Receita Bruta Total', tipo: 'cabecalho', formula: null },
+        { id: 'impostos', nome: '(-) Impostos sobre Vendas', tipo: 'linha', formula: null, deducao: true },
+        { 
+            id: 'receitaLiquida', 
+            nome: '(=) Receita Líquida', 
+            tipo: 'total', 
+            formula: (c, m) => getVal(c, m, 'receitaBruta') - Math.abs(getVal(c, m, 'impostos')) 
+        },
+        { id: 'cmv', nome: '(-) Custo das Mercadorias Vendidas (CMV)', tipo: 'linha', formula: null, deducao: true },
+        { 
+            id: 'lucroBruto', 
+            nome: '(=) Lucro Bruto', 
+            tipo: 'total', 
+            formula: (c, m) => {
+                let recLiq = getVal(c, m, 'receitaBruta') - Math.abs(getVal(c, m, 'impostos'));
+                let custoMv = Math.abs(getVal(c, m, 'cmv'));
+                return recLiq - custoMv;
+            } 
+        },
+        { 
+            id: 'despesasOperacionais', 
+            nome: '(-) Despesas Operacionais (SG&A Totais)', 
+            tipo: 'total', 
+            formula: (c, m) => {
+                return Math.abs(getVal(c, m, 'pessoal')) + 
+                       Math.abs(getVal(c, m, 'comercial')) + 
+                       Math.abs(getVal(c, m, 'fretes')) + 
+                       Math.abs(getVal(c, m, 'administrativas')) + 
+                       Math.abs(getVal(c, m, 'tributarias')) + 
+                       Math.abs(getVal(c, m, 'outras'));
+            } 
+        },
+        { id: 'pessoal', nome: '• Gastos com Pessoal', tipo: 'sublinha', formula: null, deducao: true },
+        { id: 'comercial', nome: '• Despesas Comerciais / Embalagens', tipo: 'sublinha', formula: null, deducao: true },
+        { id: 'fretes', nome: '• Fretes / Entrega Cliente', tipo: 'sublinha', formula: null, deducao: true },
+        { id: 'administrativas', nome: '• Despesas Administrativas', tipo: 'sublinha', formula: null, deducao: true },
+        { id: 'tributarias', nome: '• Despesas Tributárias', tipo: 'sublinha', formula: null, deducao: true },
+        { id: 'outras', nome: '• Outras Despesas Operacionais', tipo: 'sublinha', formula: null, deducao: true },
+        { 
+            id: 'ebitda', 
+            nome: '(=) EBITDA / Resultado Operacional', 
+            tipo: 'total-destaque', 
+            formula: (c, m) => {
+                let recLiq = getVal(c, m, 'receitaBruta') - Math.abs(getVal(c, m, 'impostos'));
+                let lucroB = recLiq - Math.abs(getVal(c, m, 'cmv'));
+                let desps = Math.abs(getVal(c, m, 'pessoal')) + 
+                            Math.abs(getVal(c, m, 'comercial')) + 
+                            Math.abs(getVal(c, m, 'fretes')) + 
+                            Math.abs(getVal(c, m, 'administrativas')) + 
+                            Math.abs(getVal(c, m, 'tributarias')) + 
+                            Math.abs(getVal(c, m, 'outras'));
+                return lucroB - desps;
+            } 
         }
+    ];
 
-        window.mudarAno = function(ano) {
-            anoAtual = ano;
-            renderizarTabela();
-        }
-
-        function formatarMoeda(val, ehDeducao = false) {
-            if (val === 0) return 'R$ 0,00';
-            let absVal = Math.abs(val);
-            let formatado = absVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            if (val < 0 || ehDeducao) {
-                return `(${formatado.replace('R$', 'R$ ')})`;
+    window.mudarCanal = function(canal) {
+        canalAtual = canal;
+        document.querySelectorAll('.canal-btn').forEach(b => {
+            if(b.dataset.canal === canal) {
+                b.className = "px-4 py-1.5 text-sm font-semibold rounded-md transition canal-btn bg-white text-indigo-900 shadow-sm";
+            } else {
+                b.className = "px-4 py-1.5 text-sm font-semibold rounded-md transition canal-btn text-slate-600 hover:text-indigo-900";
             }
-            return formatado;
-        }
-
-        function formatarPercentual(val) {
-            if (val === 0) return '0,00%';
-            if (val < 0) {
-                return `(${Math.abs(val).toFixed(2).replace('.', ',')}%)`;
-            }
-            return val.toFixed(2).replace('.', ',') + '%';
-        }
-
-        function renderizarTabela() {
-            document.getElementById('titulo-tabela').innerText = `DRE Detalhada - ${canalAtual} (${anoAtual})`;
-            const tbody = document.getElementById('corpo-dre');
-            tbody.innerHTML = '';
-
-            estruturadre_calc = estruturaDRE;
-            estruturadre_calc.forEach(item => {
-                let tr = document.createElement('tr');
-                let estiloLinha = "p-3 font-medium";
-                if(item.tipo === 'cabecalho' || item.tipo === 'total' || item.tipo === 'total-destaque') {
-                    estiloLinha = "p-3 font-bold bg-slate-50/80 text-indigo-950";
-                }
-                if(item.tipo === 'sublinha') {
-                    estiloLinha = "p-3 pl-6 text-slate-600 text-xs";
-                }
-
-                let html = `<td class="${estiloLinha}">${item.nome}</td>`;
-                let totalAcumuladoAno = 0;
-                let receitaBrutaAnoTotal = 0;
-
-                for(let m = 0; m < 12; m++) {
-                    receitaBrutaAnoTotal += getVal(canalAtual, m, 'receitaBruta');
-                }
-
-                for(let m = 0; m < 12; m++) {
-                    let val = item.formula ? item.formula(canalAtual, m) : getVal(canalAtual, m, item.id);
-                    if (item.deducao && val > 0) val = -val; 
-                    totalAcumuladoAno += val;
-
-                    let receitaBrutaMes = getVal(canalAtual, m, 'receitaBruta');
-                    let avMes = receitaBrutaMes > 0 ? (Math.abs(val) / receitaBrutaMes) * 100 : 0;
-
-                    html += `<td class="p-3 text-right">${formatarMoeda(val, item.deducao)}</td>`;
-                    html += `<td class="p-3 text-right text-slate-400 text-[11px]">${formatarPercentual(avMes)}</td>`;
-                }
-
-                let avAcumulado = receitaBrutaAnoTotal > 0 ? (Math.abs(totalAcumuladoAno) / receitaBrutaAnoTotal) * 100 : 0;
-                html += `<td class="p-3 text-right font-bold bg-indigo-50/40">${formatarMoeda(totalAcumuladoAno, item.deducao)}</td>`;
-                html += `<td class="p-3 text-right font-bold text-indigo-800 bg-indigo-50/40 text-[11px]">${formatarPercentual(avAcumulado)}</td>`;
-
-                tr.innerHTML = html;
-                tbody.appendChild(tr);
-            });
-            renderizarListaLancamentos();
-        }
-
-        function renderizarListaLancamentos() {
-            const tbody = document.getElementById('lista-lancamentos');
-            tbody.innerHTML = '';
-            if (listaLancamentos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">Nenhum lançamento realizado ainda.</td></tr>`;
-                return;
-            }
-            listaLancamentos.forEach((l, index) => {
-                let tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="p-2 text-slate-400">#${index + 1}</td>
-                    <td class="p-2 font-semibold">${l.canal}</td>
-                    <td class="p-2">${l.ano}</td>
-                    <td class="p-2">${nomesMeses[l.mes]}</td>
-                    <td class="p-2">${nomesContas[l.conta] || l.conta}</td>
-                    <td class="p-2 text-right font-bold">${formatarMoeda(l.valor, false)}</td>
-                    <td class="p-2 text-center">
-                        <button onclick="excluirLancamento(${index})" class="bg-rose-100 text-rose-700 hover:bg-rose-200 px-2.5 py-1 rounded text-xs font-semibold transition">Excluir</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        window.abrirModalLancamento = function() {
-            document.getElementById('modal-lancamento').classList.remove('hidden');
-        }
-
-        window.fecharModalLancamento = function() {
-            document.getElementById('modal-lancamento').classList.add('hidden');
-            document.getElementById('form-lancamento').reset();
-        }
-
-        window.salvarLancamento = function(e) {
-            e.preventDefault();
-            const novoLancamento = {
-                canal: document.getElementById('modal-canal').value,
-                ano: document.getElementById('modal-ano').value,
-                mes: parseInt(document.getElementById('modal-mes').value),
-                conta: document.getElementById('modal-conta').value,
-                valor: parseFloat(document.getElementById('modal-valor').value)
-            };
-            listaLancamentos.push(novoLancamento);
-            localStorage.setItem('dre_lancamentos', JSON.stringify(listaLancamentos));
-            fecharModalLancamento();
-            renderizarTabela();
-        }
-
-        window.excluirLancamento = function(index) {
-            if (confirm('Deseja realmente excluir este lançamento?')) {
-                listaLancamentos.splice(index, 1);
-                localStorage.setItem('dre_lancamentos', JSON.stringify(listaLancamentos));
-                renderizarTabela();
-            }
-        }
-
-        window.exportarExcel = function() { alert('Funcionalidade de exportar Excel pronta!'); }
-        window.exportarPDF = function() { alert('Funcionalidade de exportar PDF pronta!'); }
-
+        });
         renderizarTabela();
-    </script>
-</body>
-</html>
+    }
+
+    window.mudarAno = function(ano) {
+        anoAtual = ano;
+        renderizarTabela();
+    }
+
+    function formatarMoeda(val, ehDeducao = false) {
+        if (val === 0) return 'R$ 0,00';
+        let absVal = Math.abs(val);
+        let formatado = absVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        if (val < 0 || ehDeducao) {
+            return `(${formatado.replace('R$', 'R$ ')})`;
+        }
+        return formatado;
+    }
+
+    function formatarPercentual(val) {
+        if (val === 0) return '0,00%';
+        if (val < 0) {
+            return `(${Math.abs(val).toFixed(2).replace('.', ',')}%)`;
+        }
+        return val.toFixed(2).replace('.', ',') + '%';
+    }
+
+    function renderizarTabela() {
+        document.getElementById('titulo-tabela').innerText = `DRE Detalhada - ${canalAtual} (${anoAtual})`;
+        
+        // Atualiza o texto explicativo da base da A.V. na interface
+        const labelBaseAV = document.querySelector('.bg-slate-50\\/50.flex > .text-xs.text-slate-500');
+        if(labelBaseAV) labelBaseAV.innerText = "Base A.V.: Receita Líquida do Canal (100%)";
+
+        const tbody = document.getElementById('corpo-dre');
+        tbody.innerHTML = '';
+
+        estruturaDRE.forEach(item => {
+            let tr = document.createElement('tr');
+            let estiloLinha = "p-3 font-medium";
+            if(item.tipo === 'cabecalho' || item.tipo === 'total' || item.tipo === 'total-destaque') {
+                estiloLinha = "p-3 font-bold bg-slate-50/80 text-indigo-950";
+            }
+            if(item.tipo === 'sublinha') {
+                estiloLinha = "p-3 pl-6 text-slate-600 text-xs";
+            }
+
+            let html = `<td class="${estiloLinha}">${item.nome}</td>`;
+            
+            let totalAcumuladoAno = 0;
+            let receitaLiquidaAnoTotal = 0;
+
+            // Calcula o total da Receita Líquida acumulada do ano para servir de base do acumulado da A.V.
+            for(let m = 0; m < 12; m++) {
+                let rb = getVal(canalAtual, m, 'receitaBruta');
+                let imp = Math.abs(getVal(canalAtual, m, 'impostos'));
+                receitaLiquidaAnoTotal += (rb - imp);
+            }
+
+            for(let m = 0; m < 12; m++) {
+                let val = item.formula ? item.formula(canalAtual, m) : getVal(canalAtual, m, item.id);
+                if (item.deducao && val > 0) val = -val;
+                totalAcumuladoAno += val;
+
+                // Base do mês alterada para Receita Líquida
+                let rbMes = getVal(canalAtual, m, 'receitaBruta');
+                let impMes = Math.abs(getVal(canalAtual, m, 'impostos'));
+                let receitaLiquidaMes = rbMes - impMes;
+
+                let avMes = receitaLiquidaMes > 0 ? (Math.abs(val) / receitaLiquidaMes) * 100 : 0;
+
+                html += `<td class="p-3 text-right">${formatarMoeda(val, item.deducao)}</td>`;
+                html += `<td class="p-3 text-right text-slate-400 text-[11px]">${formatarPercentual(avMes)}</td>`;
+            }
+
+            // Base do acumulado alterada para Receita Líquida Acumulada
+            let avAcumulado = receitaLiquidaAnoTotal > 0 ? (Math.abs(totalAcumuladoAno) / receitaLiquidaAnoTotal) * 100 : 0;
+
+            html += `<td class="p-3 text-right font-bold bg-indigo-50/40">${formatarMoeda(totalAcumuladoAno, item.deducao)}</td>`;
+            html += `<td class="p-3 text-right font-bold text-indigo-800 bg-indigo-50/40 text-[11px]">${formatarPercentual(avAcumulado)}</td>`;
+
+            tr.innerHTML = html;
+            tbody.appendChild(tr);
+        });
+
+        renderizarListaLancamentos();
+    }
+
+    function renderizarListaLancamentos() {
+        const tbody = document.getElementById('lista-lancamentos');
+        tbody.innerHTML = '';
+        if (listaLancamentos.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">Nenhum lançamento realizado ainda.</td></tr>`;
+            return;
+        }
+        listaLancamentos.forEach((l, index) => {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="p-2 text-slate-400">#${index + 1}</td>
+                <td class="p-2 font-semibold">${l.canal}</td>
+                <td class="p-2">${l.ano}</td>
+                <td class="p-2">${nomesMeses[l.mes]}</td>
+                <td class="p-2">${nomesContas[l.conta] || l.conta}</td>
+                <td class="p-2 text-right font-bold">${formatarMoeda(l.valor, false)}</td>
+                <td class="p-2 text-center">
+                    <button onclick="excluirLancamento(${index})" class="bg-rose-100 text-rose-700 hover:bg-rose-200 px-2.5 py-1 rounded text-xs font-semibold transition">Excluir</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    window.abrirModalLancamento = function() {
+        document.getElementById('modal-lancamento').classList.remove('hidden');
+    }
+
+    window.fecharModalLancamento = function() {
+        document.getElementById('modal-lancamento').classList.add('hidden');
+        document.getElementById('form-lancamento').reset();
+    }
+
+    window.salvarLancamento = function(e) {
+        e.preventDefault();
+        const novoLancamento = {
+            canal: document.getElementById('modal-canal').value,
+            ano: document.getElementById('modal-ano').value,
+            mes: parseInt(document.getElementById('modal-mes').value),
+            conta: document.getElementById('modal-conta').value,
+            valor: parseFloat(document.getElementById('modal-valor').value)
+        };
+        listaLancamentos.push(novoLancamento);
+        localStorage.setItem('dre_lancamentos', JSON.stringify(listaLancamentos));
+        fecharModalLancamento();
+        renderizarTabela();
+    }
+
+    window.excluirLancamento = function(index) {
+        if (confirm('Deseja realmente excluir este lançamento?')) {
+            listaLancamentos.splice(index, 1);
+            localStorage.setItem('dre_lancamentos', JSON.stringify(listaLancamentos));
+            renderizarTabela();
+        }
+    }
+
+    window.exportarExcel = function() {
+        alert('Funcionalidade de exportar Excel pronta!');
+    }
+
+    window.exportarPDF = function() {
+        alert('Funcionalidade de exportar PDF pronta!');
+    }
+
+    renderizarTabela();
+</script>
