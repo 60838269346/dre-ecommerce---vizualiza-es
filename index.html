@@ -173,7 +173,7 @@
         </div>
     </div>
 
-    <!-- Script Oficial Intacto -->
+    <!-- Script Corrigido com Cálculo Automático Direto -->
     <script>
         let canalAtual = 'IFOOD';
         let anoAtual = '2026';
@@ -192,22 +192,6 @@
             'outras': '• Outras Despesas Operacionais'
         };
 
-        const estruturaDRE = [
-            { id: 'receitaBruta', nome: 'Receita Bruta Total', tipo: 'cabecalho', formula: null },
-            { id: 'impostos', nome: '(-) Impostos sobre Vendas', tipo: 'linha', formula: null },
-            { id: 'receitaLiquida', nome: '(=) Receita Líquida', tipo: 'total', formula: (c, m) => getVal(c, m, 'receitaBruta') - getVal(c, m, 'impostos') },
-            { id: 'cmv', nome: '(-) Custo das Mercadorias Vendidas (CMV)', tipo: 'linha', formula: null },
-            { id: 'lucroBruto', nome: '(=) Lucro Bruto', tipo: 'total', formula: (c, m) => getVal(c, m, 'receitaLiquida') - getVal(c, m, 'cmv') },
-            { id: 'despesasOperacionais', nome: '(-) Despesas Operacionais (SG&A Totais)', tipo: 'total', formula: (c, m) => getVal(c, m, 'pessoal') + getVal(c, m, 'comercial') + getVal(c, m, 'fretes') + getVal(c, m, 'administrativas') + getVal(c, m, 'tributarias') + getVal(c, m, 'outras') },
-            { id: 'pessoal', nome: '• Gastos com Pessoal', tipo: 'sublinha', formula: null },
-            { id: 'comercial', nome: '• Despesas Comerciais / Embalagens', tipo: 'sublinha', formula: null },
-            { id: 'fretes', nome: '• Fretes / Entrega Cliente', tipo: 'sublinha', formula: null },
-            { id: 'administrativas', nome: '• Despesas Administrativas', tipo: 'sublinha', formula: null },
-            { id: 'tributarias', nome: '• Despesas Tributárias', tipo: 'sublinha', formula: null },
-            { id: 'outras', nome: '• Outras Despesas Operacionais', tipo: 'sublinha', formula: null },
-            { id: 'ebitda', nome: '(=) EBITDA / Resultado Operacional', tipo: 'total-destaque', formula: (c, m) => getVal(c, m, 'lucroBruto') - getVal(c, m, 'despesasOperacionais') }
-        ];
-
         function getVal(canal, mes, conta) {
             let soma = 0;
             listaLancamentos.forEach(l => {
@@ -217,6 +201,31 @@
             });
             return soma;
         }
+
+        const estruturaDRE = [
+            { id: 'receitaBruta', nome: 'Receita Bruta Total', tipo: 'cabecalho', formula: null },
+            { id: 'impostos', nome: '(-) Impostos sobre Vendas', tipo: 'linha', formula: null },
+            { id: 'receitaLiquida', nome: '(=) Receita Líquida', tipo: 'total', formula: (c, m) => getVal(c, m, 'receitaBruta') - getVal(c, m, 'impostos') },
+            { id: 'cmv', nome: '(-) Custo das Mercadorias Vendidas (CMV)', tipo: 'linha', formula: null },
+            { id: 'lucroBruto', nome: '(=) Lucro Bruto', tipo: 'total', formula: (c, m) => {
+                let recLiq = getVal(c, m, 'receitaBruta') - getVal(c, m, 'impostos');
+                let custoMv = getVal(c, m, 'cmv');
+                return recLiq - custoMv;
+            }},
+            { id: 'despesasOperacionais', nome: '(-) Despesas Operacionais (SG&A Totais)', tipo: 'total', formula: (c, m) => getVal(c, m, 'pessoal') + getVal(c, m, 'comercial') + getVal(c, m, 'fretes') + getVal(c, m, 'administrativas') + getVal(c, m, 'tributarias') + getVal(c, m, 'outras') },
+            { id: 'pessoal', nome: '• Gastos com Pessoal', tipo: 'sublinha', formula: null },
+            { id: 'comercial', nome: '• Despesas Comerciais / Embalagens', tipo: 'sublinha', formula: null },
+            { id: 'fretes', nome: '• Fretes / Entrega Cliente', tipo: 'sublinha', formula: null },
+            { id: 'administrativas', nome: '• Despesas Administrativas', tipo: 'sublinha', formula: null },
+            { id: 'tributarias', nome: '• Despesas Tributárias', tipo: 'sublinha', formula: null },
+            { id: 'outras', nome: '• Outras Despesas Operacionais', tipo: 'sublinha', formula: null },
+            { id: 'ebitda', nome: '(=) EBITDA / Resultado Operacional', tipo: 'total-destaque', formula: (c, m) => {
+                let recLiq = getVal(c, m, 'receitaBruta') - getVal(c, m, 'impostos');
+                let lucroB = recLiq - getVal(c, m, 'cmv');
+                let desps = getVal(c, m, 'pessoal') + getVal(c, m, 'comercial') + getVal(c, m, 'fretes') + getVal(c, m, 'administrativas') + getVal(c, m, 'tributarias') + getVal(c, m, 'outras');
+                return lucroB - desps;
+            }}
+        ];
 
         window.mudarCanal = function(canal) {
             canalAtual = canal;
