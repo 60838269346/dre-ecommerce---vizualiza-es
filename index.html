@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DRE por Canal - Visão por Ano, Mês a Mês e Acumulado</title>
-    <!-- Tailwind CSS para estilização moderna -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -34,7 +33,6 @@
         
         <!-- Filtros e Seletores -->
         <div class="bg-white p-4 rounded-xl shadow-sm mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
-            <!-- Canais -->
             <div class="flex items-center gap-2">
                 <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Canal:</span>
                 <div class="inline-flex rounded-lg p-1 bg-slate-100" id="botoes-canal">
@@ -44,7 +42,6 @@
                 </div>
             </div>
 
-            <!-- Anos -->
             <div class="flex items-center gap-2">
                 <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Exercício (Ano):</span>
                 <select id="filtro-ano" onchange="mudarAno(this.value)" class="bg-slate-100 border border-slate-300 text-slate-800 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2">
@@ -56,7 +53,7 @@
         </div>
 
         <!-- Tabela DRE -->
-        <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200">
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200 mb-8">
             <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                 <h3 id="titulo-tabela" class="font-bold text-lg text-indigo-950">DRE Detalhada - IFOOD (2026)</h3>
                 <span class="text-xs text-slate-500 bg-slate-200/60 px-2.5 py-1 rounded-full font-medium">Base A.V.: Receita Bruta do Canal (100%)</span>
@@ -83,7 +80,33 @@
                         </tr>
                     </thead>
                     <tbody id="corpo-dre" class="divide-y divide-slate-100 text-slate-700">
-                        <!-- Preenchido via JavaScript -->
+                        <!-- Preenchido via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Seção de Histórico de Lançamentos com Opção de Excluir -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200 p-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-md text-indigo-950">Lançamentos Realizados (Histórico)</h3>
+                <span class="text-xs text-slate-500">Você pode excluir qualquer lançamento abaixo se precisar corrigir.</span>
+            </div>
+            <div class="table-container">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-700 uppercase tracking-wider border-b">
+                            <th class="p-2">ID</th>
+                            <th class="p-2">Canal</th>
+                            <th class="p-2">Ano</th>
+                            <th class="p-2">Mês</th>
+                            <th class="p-2">Conta da DRE</th>
+                            <th class="p-2 text-right">Valor</th>
+                            <th class="p-2 text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-lancamentos" class="divide-y divide-slate-100">
+                        <!-- Preenchido via JS -->
                     </tbody>
                 </table>
             </div>
@@ -150,11 +173,24 @@
         </div>
     </div>
 
-    <!-- Script de Lógica e Armazenamento Local -->
+    <!-- Script Completo e Consolidado -->
     <script>
         let canalAtual = 'IFOOD';
         let anoAtual = '2026';
-        let dadosDRE = JSON.parse(localStorage.getItem('dre_dados')) || {};
+        let listaLancamentos = JSON.parse(localStorage.getItem('dre_lancamentos')) || [];
+
+        const nomesMeses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        const nomesContas = {
+            'receitaBruta': 'Receita Bruta Total',
+            'impostos': '(-) Impostos sobre Vendas',
+            'cmv': '(-) Custo das Mercadorias Vendidas (CMV)',
+            'pessoal': '• Gastos com Pessoal',
+            'comercial': '• Despesas Comerciais / Embalagens',
+            'fretes': '• Fretes / Entrega Cliente',
+            'administrativas': '• Despesas Administrativas',
+            'tributarias': '• Despesas Tributárias',
+            'outras': '• Outras Despesas Operacionais'
+        };
 
         const estruturaDRE = [
             { id: 'receitaBruta', nome: 'Receita Bruta Total', tipo: 'cabecalho', formula: null },
@@ -173,9 +209,13 @@
         ];
 
         function getVal(canal, mes, conta) {
-            try {
-                return dadosDRE?.[anoAtual]?.[canal]?.[mes]?.[conta] || 0;
-            } catch { return 0; }
+            let soma = 0;
+            listaLancamentos.forEach(l => {
+                if (l.ano === anoAtual && l.canal === canal && l.mes === mes && l.conta === conta) {
+                    soma += Number(l.valor) || 0;
+                }
+            });
+            return soma;
         }
 
         window.mudarCanal = function(canal) {
@@ -196,10 +236,18 @@
         }
 
         function formatarMoeda(val) {
+            if (val === 0) return 'R$ 0,00';
+            if (val < 0) {
+                return `(R$ ${Math.abs(val).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`;
+            }
             return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
         function formatarPercentual(val) {
+            if (val === 0) return '0,00%';
+            if (val < 0) {
+                return `(${Math.abs(val).toFixed(2).replace('.', ',')}%)`;
+            }
             return val.toFixed(2).replace('.', ',') + '%';
         }
 
@@ -244,6 +292,34 @@
                 tr.innerHTML = html;
                 tbody.appendChild(tr);
             });
+
+            renderizarListaLancamentos();
+        }
+
+        function renderizarListaLancamentos() {
+            const tbody = document.getElementById('lista-lancamentos');
+            tbody.innerHTML = '';
+
+            if (listaLancamentos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">Nenhum lançamento realizado ainda.</td></tr>`;
+                return;
+            }
+
+            listaLancamentos.forEach((l, index) => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-2 text-slate-400">#${index + 1}</td>
+                    <td class="p-2 font-semibold">${l.canal}</td>
+                    <td class="p-2">${l.ano}</td>
+                    <td class="p-2">${nomesMeses[l.mes]}</td>
+                    <td class="p-2">${nomesContas[l.conta] || l.conta}</td>
+                    <td class="p-2 text-right font-bold">${formatarMoeda(l.valor)}</td>
+                    <td class="p-2 text-center">
+                        <button onclick="excluirLancamento(${index})" class="bg-rose-100 text-rose-700 hover:bg-rose-200 px-2.5 py-1 rounded text-xs font-semibold transition">Excluir</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
         window.abrirModalLancamento = function() {
@@ -257,30 +333,33 @@
 
         window.salvarLancamento = function(e) {
             e.preventDefault();
-            const canal = document.getElementById('modal-canal').value;
-            const ano = document.getElementById('modal-ano').value;
-            const mes = parseInt(document.getElementById('modal-mes').value);
-            const conta = document.getElementById('modal-conta').value;
-            const valor = parseFloat(document.getElementById('modal-valor').value);
+            const novoLancamento = {
+                canal: document.getElementById('modal-canal').value,
+                ano: document.getElementById('modal-ano').value,
+                mes: parseInt(document.getElementById('modal-mes').value),
+                conta: document.getElementById('modal-conta').value,
+                valor: parseFloat(document.getElementById('modal-valor').value)
+            };
 
-            if (!dadosDRE[ano]) dadosDRE[ano] = {};
-            if (!dadosDRE[ano][canal]) dadosDRE[ano][canal] = {};
-            if (!dadosDRE[ano][canal][mes]) dadosDRE[ano][canal][mes] = {};
-            
-            // Soma ao valor existente da conta no mês
-            dadosDRE[ano][canal][mes][conta] = (dadosDRE[ano][canal][mes][conta] || 0) + valor;
-
-            localStorage.setItem('dre_dados', JSON.stringify(dadosDRE));
+            listaLancamentos.push(novoLancamento);
+            localStorage.setItem('dre_lancamentos', JSON.stringify(listaLancamentos));
             
             fecharModalLancamento();
             renderizarTabela();
             alert('Lançamento salvo com sucesso!');
         }
 
+        window.excluirLancamento = function(index) {
+            if (confirm('Deseja realmente excluir este lançamento?')) {
+                listaLancamentos.splice(index, 1);
+                localStorage.setItem('dre_lancamentos', JSON.stringify(listaLancamentos));
+                renderizarTabela();
+            }
+        }
+
         window.exportarExcel = function() { alert('Funcionalidade de exportar Excel pronta!'); }
         window.exportarPDF = function() { alert('Funcionalidade de exportar PDF pronta!'); }
 
-        // Renderiza a tabela ao carregar
         renderizarTabela();
     </script>
 </body>
