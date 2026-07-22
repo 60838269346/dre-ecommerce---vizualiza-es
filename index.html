@@ -120,13 +120,14 @@
     }
 
     function renderizarTabela() {
-        document.getElementById('titulo-tabela').innerText = `DRE Detalhada - ${canalAtual} (${anoAtual})`;
+        const elTitulo = document.getElementById('titulo-tabela');
+        if (elTitulo) elTitulo.innerText = `DRE Detalhada - ${canalAtual} (${anoAtual})`;
         
-        // Atualiza o texto explicativo da base da A.V. na interface
-        const labelBaseAV = document.querySelector('.bg-slate-50\\/50.flex > .text-xs.text-slate-500');
+        const labelBaseAV = document.querySelector('.bg-slate-50.flex .text-xs.text-slate-500') || document.querySelector('.bg-slate-50\\/50.flex > .text-xs.text-slate-500');
         if(labelBaseAV) labelBaseAV.innerText = "Base A.V.: Receita Líquida do Canal (100%)";
 
         const tbody = document.getElementById('corpo-dre');
+        if (!tbody) return;
         tbody.innerHTML = '';
 
         estruturaDRE.forEach(item => {
@@ -144,7 +145,6 @@
             let totalAcumuladoAno = 0;
             let receitaLiquidaAnoTotal = 0;
 
-            // Calcula o total da Receita Líquida acumulada do ano para servir de base do acumulado da A.V.
             for(let m = 0; m < 12; m++) {
                 let rb = getVal(canalAtual, m, 'receitaBruta');
                 let imp = Math.abs(getVal(canalAtual, m, 'impostos'));
@@ -156,7 +156,6 @@
                 if (item.deducao && val > 0) val = -val;
                 totalAcumuladoAno += val;
 
-                // Base do mês alterada para Receita Líquida
                 let rbMes = getVal(canalAtual, m, 'receitaBruta');
                 let impMes = Math.abs(getVal(canalAtual, m, 'impostos'));
                 let receitaLiquidaMes = rbMes - impMes;
@@ -167,7 +166,6 @@
                 html += `<td class="p-3 text-right text-slate-400 text-[11px]">${formatarPercentual(avMes)}</td>`;
             }
 
-            // Base do acumulado alterada para Receita Líquida Acumulada
             let avAcumulado = receitaLiquidaAnoTotal > 0 ? (Math.abs(totalAcumuladoAno) / receitaLiquidaAnoTotal) * 100 : 0;
 
             html += `<td class="p-3 text-right font-bold bg-indigo-50/40">${formatarMoeda(totalAcumuladoAno, item.deducao)}</td>`;
@@ -182,6 +180,7 @@
 
     function renderizarListaLancamentos() {
         const tbody = document.getElementById('lista-lancamentos');
+        if (!tbody) return;
         tbody.innerHTML = '';
         if (listaLancamentos.length === 0) {
             tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">Nenhum lançamento realizado ainda.</td></tr>`;
@@ -205,12 +204,15 @@
     }
 
     window.abrirModalLancamento = function() {
-        document.getElementById('modal-lancamento').classList.remove('hidden');
+        const modal = document.getElementById('modal-lancamento');
+        if (modal) modal.classList.remove('hidden');
     }
 
     window.fecharModalLancamento = function() {
-        document.getElementById('modal-lancamento').classList.add('hidden');
-        document.getElementById('form-lancamento').reset();
+        const modal = document.getElementById('modal-lancamento');
+        if (modal) modal.classList.add('hidden');
+        const form = document.getElementById('form-lancamento');
+        if (form) form.reset();
     }
 
     window.salvarLancamento = function(e) {
