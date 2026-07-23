@@ -8,9 +8,27 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+        /* Congela a primeira coluna da DRE ao rolar para a direita */
+        .coluna-fixa {
+            position: sticky;
+            left: 0;
+            z-index: 20;
+            background-color: #ffffff;
+        }
+        /* Ajuste de cor de fundo da coluna fixa para manter consistência nas linhas alternadas ou cabeçalho */
+        tr.bg-slate-100 .coluna-fixa {
+            background-color: #f1f5f9;
+        }
+        tr.bg-slate-50 .coluna-fixa {
+            background-color: #f8fafc;
+        }
+        tr:hover .coluna-fixa {
+            background-color: #f8fafc;
+        }
+    </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans">
-
     <!-- Cabeçalho -->
     <header class="bg-slate-900 text-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -43,7 +61,6 @@
 
     <!-- Conteúdo Principal -->
     <main class="max-w-7xl mx-auto px-4 py-8 space-y-6">
-        
         <!-- Controles: Seleção de Canais e Ano -->
         <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
@@ -69,11 +86,10 @@
                     <h2 id="titulo-dre-canal" class="font-bold text-slate-800 text-base">DRE - Canal</h2>
                     <p class="text-xs text-slate-500">Visão Mensal por Ano, Análise Vertical (%) sobre a Receita Líquida do Canal e Acumulado do Ano</p>
                 </div>
-                <div class="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-semibold border border-emerald-200">
+                <div id="badge-av-container" class="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-semibold border border-emerald-200">
                     Base A.V.: Receita Líquida do Canal (100%)
                 </div>
             </div>
-
             <div class="overflow-x-auto">
                 <table id="tabela-dre-dados" class="w-full text-left border-collapse text-xs">
                     <thead>
@@ -87,7 +103,6 @@
                 </table>
             </div>
         </div>
-
     </main>
 
     <!-- Modal de Lançamentos -->
@@ -125,7 +140,6 @@
                         </select>
                     </div>
                 </div>
-
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Selecione o Canal</label>
                     <select id="lanc-canal" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
@@ -134,7 +148,6 @@
                         <option value="3) MARKETPLACE">3) MARKETPLACE</option>
                     </select>
                 </div>
-
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Tipo de Linha na DRE</label>
@@ -155,18 +168,15 @@
                         <input type="text" id="lanc-valor" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="0.00">
                     </div>
                 </div>
-
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Descrição / Histórico</label>
                     <input type="text" id="lanc-desc" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="Ex: Faturamento...">
                 </div>
-
                 <div class="pt-2 flex justify-end space-x-3">
                     <button onclick="toggleAdminModal()" class="px-4 py-2 border border-slate-300 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50">Cancelar</button>
                     <button onclick="adicionarLancamento()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 shadow-sm">Salvar Lançamento</button>
                 </div>
             </div>
-
             <div class="px-6 py-4 bg-slate-50 border-t border-slate-100">
                 <h4 class="text-xs font-bold text-slate-500 uppercase mb-2">Lançamentos Recentes</h4>
                 <div id="lista-lancamentos-recentes" class="max-h-32 overflow-y-auto space-y-1 text-xs text-slate-600"></div>
@@ -178,19 +188,17 @@
     <script>
         const BIN_ID = "6a60f751da38895dfe805e30";
         const API_KEY = "$2a$10$2gRuysiXM85zMZ4OTG2dU.AEaN0WyPHJveZ2wy62/tqidY73EOJBS";
-
         const mesesNomes = {
             "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril",
             "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto",
             "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro"
         };
-
         const canais = [
             { id: "1) IFOOD", nome: "1) IFOOD" },
             { id: "2) APP/SITE", nome: "2) APP/SITE" },
-            { id: "3) MARKETPLACE", nome: "3) MARKETPLACE" }
+            { id: "3) MARKETPLACE", nome: "3) MARKETPLACE" },
+            { id: "CONSOLIDADO", nome: "CONSOLIDADO (TOTAL)" }
         ];
-
         let canalAtivo = "1) IFOOD";
         let anoAtivo = "2026";
         let lancamentos = [];
@@ -307,7 +315,6 @@
             document.getElementById('filtro-ano').value = ano;
             anoAtivo = String(ano);
             canalAtivo = String(canal);
-
             renderizarBotoesCanais();
             calcularEAtualizarDRE();
             toggleAdminModal();
@@ -340,12 +347,24 @@
         function calcularEAtualizarDRE() {
             const objCanalAtivo = canais.find(c => c.id === canalAtivo) || canais[0];
             document.getElementById('titulo-dre-canal').innerText = `DRE Detalhada - ${objCanalAtivo.nome} (${anoAtivo})`;
+            
+            const badgeContainer = document.getElementById('badge-av-container');
+            if (canalAtivo === "CONSOLIDADO") {
+                badgeContainer.innerText = "Base A.V.: Receita Líquida Consolidada (100%)";
+            } else {
+                badgeContainer.innerText = "Base A.V.: Receita Líquida do Canal (100%)";
+            }
 
-            let lancsCanalAno = lancamentos.filter(l => l.canal === canalAtivo && l.ano === anoAtivo);
+            let lancsCanalAno = [];
+            if (canalAtivo === "CONSOLIDADO") {
+                lancsCanalAno = lancamentos.filter(l => l.ano === anoAtivo);
+            } else {
+                lancsCanalAno = lancamentos.filter(l => l.canal === canalAtivo && l.ano === anoAtivo);
+            }
+
             let mesesAtivos = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
-
             const theadTr = document.getElementById('dre-thead-tr');
-            let theadHtml = '<th class="py-3 px-4 min-w-[240px]">Estrutura da DRE</th>';
+            let theadHtml = '<th class="py-3 px-4 min-w-[240px] coluna-fixa bg-slate-100">Estrutura da DRE</th>';
             mesesAtivos.forEach(mes => {
                 theadHtml += `<th class="py-3 px-2 text-right">${mesesNomes[mes].substring(0,3)} (R$)</th><th class="py-3 px-2 text-right">A.V.</th>`;
             });
@@ -404,14 +423,13 @@
                     tr.className = 'hover:bg-slate-50/80 transition';
                 }
 
-                let html = `<td class="px-4 py-2.5">${nome}</td>`;
+                let html = `<td class="px-4 py-2.5 coluna-fixa">${nome}</td>`;
                 mesesAtivos.forEach(mes => {
                     let dm = dadosMes[mes];
                     let val = seletorValor(dm);
                     let baseAV = dm.receita_liquida > 0 ? dm.receita_liquida : 1;
                     let av = (Math.abs(val) / baseAV) * 100;
                     let valExibicao = forcarParenteses && val > 0 ? -val : val;
-
                     html += `
                         <td class="py-2.5 px-2 text-right font-medium">${formatarMoeda(valExibicao)}</td>
                         <td class="py-2.5 px-2 text-right text-slate-500">${formatarPercentual(av)}</td>
@@ -422,12 +440,10 @@
                 let baseAcumAV = acumuladoAno.receita_liquida > 0 ? acumuladoAno.receita_liquida : 1;
                 let avAcum = (Math.abs(valAcum) / baseAcumAV) * 100;
                 let valAcumExibicao = forcarParenteses && valAcum > 0 ? -valAcum : valAcum;
-
                 html += `
                     <td class="py-2.5 px-3 text-right font-bold bg-slate-50">${formatarMoeda(valAcumExibicao)}</td>
                     <td class="py-2.5 px-3 text-right font-bold text-slate-600 bg-slate-50">${formatarPercentual(avAcum)}</td>
                 `;
-
                 tr.innerHTML = html;
                 tbody.appendChild(tr);
             }
@@ -447,7 +463,9 @@
             adicionarLinha("(=) EBITDA / Resultado Operacional", dm => dm.ebitda, false, true);
         }
 
-        function exportarPDF() { window.print(); }
+        function exportarPDF() {
+            window.print();
+        }
 
         function exportarExcel() {
             const tabela = document.getElementById("tabela-dre-dados");
