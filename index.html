@@ -16,16 +16,9 @@
             z-index: 20;
             background-color: #ffffff;
         }
-        /* Ajuste de cor de fundo da coluna fixa para manter consistência nas linhas alternadas ou cabeçalho */
-        tr.bg-slate-100 .coluna-fixa {
-            background-color: #f1f5f9;
-        }
-        tr.bg-slate-50 .coluna-fixa {
-            background-color: #f8fafc;
-        }
-        tr:hover .coluna-fixa {
-            background-color: #f8fafc;
-        }
+        tr.bg-slate-100 .coluna-fixa { background-color: #f1f5f9; }
+        tr.bg-slate-50 .coluna-fixa { background-color: #f8fafc; }
+        tr:hover .coluna-fixa { background-color: #f8fafc; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans">
@@ -84,7 +77,7 @@
             <div class="px-6 py-4 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-50/50 gap-2">
                 <div>
                     <h2 id="titulo-dre-canal" class="font-bold text-slate-800 text-base">DRE - Canal</h2>
-                    <p class="text-xs text-slate-500">Visão Mensal por Ano, Análise Vertical (%) sobre a Receita Líquida do Canal e Acumulado do Ano</p>
+                    <p class="text-xs text-slate-500">Visão Mensal por Ano, Análise Vertical (%) sobre a Receita Líquida e Acumulado do Ano</p>
                 </div>
                 <div id="badge-av-container" class="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-semibold border border-emerald-200">
                     Base A.V.: Receita Líquida do Canal (100%)
@@ -197,13 +190,13 @@
             { id: "1) IFOOD", nome: "1) IFOOD" },
             { id: "2) APP/SITE", nome: "2) APP/SITE" },
             { id: "3) MARKETPLACE", nome: "3) MARKETPLACE" },
-            { id: "CONSOLIDADO", nome: "CONSOLIDADO (TOTAL)" }
+            { id: "CONSOLIDADO", nome: "CONSOLIDADO (TOTAL)" },
+            { id: "CONSOLIDADO_LADO_A_LADO", nome: "📊 CONSOLIDADO LADO A LADO" }
         ];
         let canalAtivo = "1) IFOOD";
         let anoAtivo = "2026";
         let lancamentos = [];
 
-        // Carregar dados da nuvem ao iniciar
         async function carregarDadosDaNuvem() {
             try {
                 let resposta = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
@@ -222,7 +215,6 @@
             calcularEAtualizarDRE();
         }
 
-        // Salvar dados na nuvem
         async function salvarDadosNaNuvem() {
             try {
                 await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
@@ -309,7 +301,6 @@
             });
 
             await salvarDadosNaNuvem();
-
             document.getElementById('lanc-valor').value = '';
             document.getElementById('lanc-desc').value = '';
             document.getElementById('filtro-ano').value = ano;
@@ -344,32 +335,14 @@
             });
         }
 
-        function calcularEAtualizarDRE() {
-            const objCanalAtivo = canais.find(c => c.id === canalAtivo) || canais[0];
-            document.getElementById('titulo-dre-canal').innerText = `DRE Detalhada - ${objCanalAtivo.nome} (${anoAtivo})`;
-            
-            const badgeContainer = document.getElementById('badge-av-container');
-            if (canalAtivo === "CONSOLIDADO") {
-                badgeContainer.innerText = "Base A.V.: Receita Líquida Consolidada (100%)";
-            } else {
-                badgeContainer.innerText = "Base A.V.: Receita Líquida do Canal (100%)";
-            }
-
-            let lancsCanalAno = [];
-            if (canalAtivo === "CONSOLIDADO") {
-                lancsCanalAno = lancamentos.filter(l => l.ano === anoAtivo);
-            } else {
-                lancsCanalAno = lancamentos.filter(l => l.canal === canalAtivo && l.ano === anoAtivo);
-            }
-
+        function calcularDadosCanalParaAno(nomeCanal, ano) {
             let mesesAtivos = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
-            const theadTr = document.getElementById('dre-thead-tr');
-            let theadHtml = '<th class="py-3 px-4 min-w-[240px] coluna-fixa bg-slate-100">Estrutura da DRE</th>';
-            mesesAtivos.forEach(mes => {
-                theadHtml += `<th class="py-3 px-2 text-right">${mesesNomes[mes].substring(0,3)} (R$)</th><th class="py-3 px-2 text-right">A.V.</th>`;
-            });
-            theadHtml += `<th class="py-3 px-3 text-right bg-slate-200/60">Acumulado (${anoAtivo})</th><th class="py-3 px-3 text-right bg-slate-200/60">A.V. Acum.</th>`;
-            theadTr.innerHTML = theadHtml;
+            let lancsCanalAno = [];
+            if (nomeCanal === "CONSOLIDADO") {
+                lancsCanalAno = lancamentos.filter(l => l.ano === ano);
+            } else {
+                lancsCanalAno = lancamentos.filter(l => l.canal === nomeCanal && l.ano === ano);
+            }
 
             let dadosMes = {};
             mesesAtivos.forEach(mes => {
@@ -403,15 +376,104 @@
                 fretes: 0, administrativas: 0, tributarias: 0,
                 outras_despesas: 0, total_desp: 0, ebitda: 0
             };
-
             Object.values(dadosMes).forEach(dm => {
                 Object.keys(acumuladoAno).forEach(k => {
                     acumuladoAno[k] += dm[k];
                 });
             });
 
+            return { dadosMes, acumuladoAno };
+        }
+
+        function calcularEAtualizarDRE() {
+            const objCanalAtivo = canais.find(c => c.id === canalAtivo) || canais[0];
+            document.getElementById('titulo-dre-canal').innerText = `DRE Detalhada - ${objCanalAtivo.nome} (${anoAtivo})`;
+            const badgeContainer = document.getElementById('badge-av-container');
+
+            if (canalAtivo === "CONSOLIDADO") {
+                badgeContainer.innerText = "Base A.V.: Receita Líquida Consolidada (100%)";
+            } else if (canalAtivo === "CONSOLIDADO_LADO_A_LADO") {
+                badgeContainer.innerText = "Visão Lado a Lado: IFOOD | APP/SITE | MARKETPLACE | CONSOLIDADO (Com A.V. individual)";
+            } else {
+                badgeContainer.innerText = "Base A.V.: Receita Líquida do Canal (100%)";
+            }
+
+            const theadTr = document.getElementById('dre-thead-tr');
             const tbody = document.getElementById('dre-table-body');
             tbody.innerHTML = '';
+
+            // Se for a nova visão consolidada lado a lado
+            if (canalAtivo === "CONSOLIDADO_LADO_A_LADO") {
+                let theadHtml = '<th class="py-3 px-4 min-w-[240px] coluna-fixa bg-slate-100">Estrutura da DRE</th>';
+                const canaisComparacao = ["1) IFOOD", "2) APP/SITE", "3) MARKETPLACE", "CONSOLIDADO"];
+                const rotulosCurtos = { "1) IFOOD": "IFOOD", "2) APP/SITE": "APP/SITE", "3) MARKETPLACE": "MARKETPLACE", "CONSOLIDADO": "TOTAL GERAL" };
+
+                canaisComparacao.forEach(idC => {
+                    theadHtml += `<th class="py-3 px-2 text-right border-l border-slate-300 font-bold bg-slate-100">${rotulosCurtos[idC]} (Acum.)</th>`;
+                    theadHtml += `<th class="py-3 px-2 text-right font-bold bg-slate-100">A.V.</th>`;
+                });
+                theadTr.innerHTML = theadHtml;
+
+                let dadosCanais = {};
+                canaisComparacao.forEach(idC => {
+                    dadosCanais[idC] = calcularDadosCanalParaAno(idC, anoAtivo).acumuladoAno;
+                });
+
+                function adicionarLinhaLadoALado(nome, seletorValor, isHeader = false, isSubtotal = false, forcarParenteses = false) {
+                    let tr = document.createElement('tr');
+                    if (isHeader) {
+                        tr.className = 'bg-slate-100 font-bold text-slate-900';
+                    } else if (isSubtotal) {
+                        tr.className = 'bg-slate-50 font-semibold text-slate-800 border-t border-b border-slate-200';
+                    } else {
+                        tr.className = 'hover:bg-slate-50/80 transition';
+                    }
+
+                    let html = `<td class="px-4 py-2.5 coluna-fixa">${nome}</td>`;
+                    canaisComparacao.forEach(idC => {
+                        let acumuladoAno = dadosCanais[idC];
+                        let valAcum = seletorValor(acumuladoAno);
+                        let baseAcumAV = acumuladoAno.receita_liquida > 0 ? acumuladoAno.receita_liquida : 1;
+                        let avAcum = (Math.abs(valAcum) / baseAcumAV) * 100;
+                        let valAcumExibicao = forcarParenteses && valAcum > 0 ? -valAcum : valAcum;
+
+                        html += `
+                            <td class="py-2.5 px-2 text-right font-medium border-l border-slate-200">${formatarMoeda(valAcumExibicao)}</td>
+                            <td class="py-2.5 px-2 text-right text-slate-500">${formatarPercentual(avAcum)}</td>
+                        `;
+                    });
+                    tr.innerHTML = html;
+                    tbody.appendChild(tr);
+                }
+
+                adicionarLinhaLadoALado("Receita Bruta Total", dm => dm.receita_bruta, true, false);
+                adicionarLinhaLadoALado("(-) Impostos sobre Vendas", dm => dm.impostos, false, false, true);
+                adicionarLinhaLadoALado("(=) Receita Líquida", dm => dm.receita_liquida, false, true);
+                adicionarLinhaLadoALado("(-) Custo das Mercadorias Vendidas (CMV)", dm => dm.cmv, true, false, true);
+                adicionarLinhaLadoALado("(=) Lucro Bruto", dm => dm.lucro_bruto, false, true);
+                adicionarLinhaLadoALado("(-) Despesas Operacionais (SG&A Totais)", dm => dm.total_desp, true, false, true);
+                adicionarLinhaLadoALado("    • Gastos com Pessoal", dm => dm.pessoal, false, false, true);
+                adicionarLinhaLadoALado("    • Despesas Comerciais / Embalagens", dm => dm.comercial, false, false, true);
+                adicionarLinhaLadoALado("    • Fretes / Entrega Cliente", dm => dm.fretes, false, false, true);
+                adicionarLinhaLadoALado("    • Despesas Administrativas", dm => dm.administrativas, false, false, true);
+                adicionarLinhaLadoALado("    • Despesas Tributárias", dm => dm.tributarias, false, false, true);
+                adicionarLinhaLadoALado("    • Outras Despesas Operacionais", dm => dm.outras_despesas, false, false, true);
+                adicionarLinhaLadoALado("(=) EBITDA / Resultado Operacional", dm => dm.ebitda, false, true);
+                return;
+            }
+
+            // Visão normal (por canal individual ou consolidado mensal)
+            let resCanal = calcularDadosCanalParaAno(canalAtivo, anoAtivo);
+            let dadosMes = resCanal.dadosMes;
+            let acumuladoAno = resCanal.acumuladoAno;
+            let mesesAtivos = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+
+            let theadHtml = '<th class="py-3 px-4 min-w-[240px] coluna-fixa bg-slate-100">Estrutura da DRE</th>';
+            mesesAtivos.forEach(mes => {
+                theadHtml += `<th class="py-3 px-2 text-right">${mesesNomes[mes].substring(0,3)} (R$)</th><th class="py-3 px-2 text-right">A.V.</th>`;
+            });
+            theadHtml += `<th class="py-3 px-3 text-right bg-slate-200/60">Acumulado (${anoAtivo})</th><th class="py-3 px-3 text-right bg-slate-200/60">A.V. Acum.</th>`;
+            theadTr.innerHTML = theadHtml;
 
             function adicionarLinha(nome, seletorValor, isHeader = false, isSubtotal = false, forcarParenteses = false) {
                 let tr = document.createElement('tr');
@@ -430,6 +492,7 @@
                     let baseAV = dm.receita_liquida > 0 ? dm.receita_liquida : 1;
                     let av = (Math.abs(val) / baseAV) * 100;
                     let valExibicao = forcarParenteses && val > 0 ? -val : val;
+
                     html += `
                         <td class="py-2.5 px-2 text-right font-medium">${formatarMoeda(valExibicao)}</td>
                         <td class="py-2.5 px-2 text-right text-slate-500">${formatarPercentual(av)}</td>
@@ -440,6 +503,7 @@
                 let baseAcumAV = acumuladoAno.receita_liquida > 0 ? acumuladoAno.receita_liquida : 1;
                 let avAcum = (Math.abs(valAcum) / baseAcumAV) * 100;
                 let valAcumExibicao = forcarParenteses && valAcum > 0 ? -valAcum : valAcum;
+
                 html += `
                     <td class="py-2.5 px-3 text-right font-bold bg-slate-50">${formatarMoeda(valAcumExibicao)}</td>
                     <td class="py-2.5 px-3 text-right font-bold text-slate-600 bg-slate-50">${formatarPercentual(avAcum)}</td>
