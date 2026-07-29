@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DRE por Canal - Visão por Ano, Mês a Mês e Acumulado</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <style>
         /* Congela a primeira coluna da DRE ao rolar para a direita */
@@ -22,7 +20,7 @@
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans">
-    <!-- Cabeçalho -->
+
     <header class="bg-slate-900 text-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center space-x-3">
@@ -43,7 +41,6 @@
                     <i class="fa-solid fa-file-pdf text-red-400"></i>
                     <span>Baixar PDF</span>
                 </button>
-                <!-- Botão de Lançamento protegido por senha -->
                 <button onclick="tentarAbrirAdmin()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm flex items-center space-x-2">
                     <i class="fa-solid fa-plus-circle"></i>
                     <span>Novo Lançamento</span>
@@ -52,15 +49,13 @@
         </div>
     </header>
 
-    <!-- Conteúdo Principal -->
     <main class="max-w-7xl mx-auto px-4 py-8 space-y-6">
-        <!-- Controles: Seleção de Canais e Ano -->
+        
         <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
                 <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Selecione o Canal de Venda</h3>
                 <div id="canais-botoes" class="flex flex-wrap gap-2">
-                    <!-- Gerado via JavaScript -->
-                </div>
+                    </div>
             </div>
             <div>
                 <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Exercício (Ano)</label>
@@ -72,7 +67,6 @@
             </div>
         </div>
 
-        <!-- Tabela DRE do Canal Selecionado -->
         <div id="dre-container-export" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-50/50 gap-2">
                 <div>
@@ -83,22 +77,21 @@
                     Base A.V.: Receita Líquida do Canal (100%)
                 </div>
             </div>
+
             <div class="overflow-x-auto">
                 <table id="tabela-dre-dados" class="w-full text-left border-collapse text-xs">
                     <thead>
                         <tr id="dre-thead-tr" class="bg-slate-100/70 text-slate-700 font-semibold border-b border-slate-200">
-                            <!-- Preenchido via JavaScript -->
-                        </tr>
+                            </tr>
                     </thead>
                     <tbody id="dre-table-body" class="divide-y divide-slate-100 text-slate-700">
-                        <!-- Preenchido via JavaScript -->
-                    </tbody>
+                        </tbody>
                 </table>
             </div>
         </div>
+
     </main>
 
-    <!-- Modal de Lançamentos -->
     <div id="admin-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden">
             <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
@@ -177,15 +170,16 @@
         </div>
     </div>
 
-    <!-- Lógica da Aplicação com JSONBin Integrado -->
     <script>
         const BIN_ID = "6a60f751da38895dfe805e30";
         const API_KEY = "$2a$10$2gRuysiXM85zMZ4OTG2dU.AEaN0WyPHJveZ2wy62/tqidY73EOJBS";
+
         const mesesNomes = {
             "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril",
             "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto",
             "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro"
         };
+
         const canais = [
             { id: "1) IFOOD", nome: "1) IFOOD" },
             { id: "2) APP/SITE", nome: "2) APP/SITE" },
@@ -193,6 +187,7 @@
             { id: "CONSOLIDADO", nome: "CONSOLIDADO (TOTAL)" },
             { id: "CONSOLIDADO_LADO_A_LADO", nome: "📊 CONSOLIDADO LADO A LADO" }
         ];
+
         let canalAtivo = "1) IFOOD";
         let anoAtivo = "2026";
         let lancamentos = [];
@@ -239,9 +234,10 @@
             }
         }
 
+        // Formatação com parênteses mantida, sem espaços extras para garantir compatibilidade com o Excel
         function formatarMoeda(valor) {
             let absVal = Math.abs(valor);
-            let formatado = absVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            let formatado = absVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }).replace(/\s/g, '');
             return valor < 0 ? `(${formatado})` : formatado;
         }
 
@@ -376,6 +372,7 @@
                 fretes: 0, administrativas: 0, tributarias: 0,
                 outras_despesas: 0, total_desp: 0, ebitda: 0
             };
+
             Object.values(dadosMes).forEach(dm => {
                 Object.keys(acumuladoAno).forEach(k => {
                     acumuladoAno[k] += dm[k];
@@ -388,8 +385,8 @@
         function calcularEAtualizarDRE() {
             const objCanalAtivo = canais.find(c => c.id === canalAtivo) || canais[0];
             document.getElementById('titulo-dre-canal').innerText = `DRE Detalhada - ${objCanalAtivo.nome} (${anoAtivo})`;
+            
             const badgeContainer = document.getElementById('badge-av-container');
-
             if (canalAtivo === "CONSOLIDADO") {
                 badgeContainer.innerText = "Base A.V.: Receita Líquida Consolidada (100%)";
             } else if (canalAtivo === "CONSOLIDADO_LADO_A_LADO") {
@@ -406,7 +403,12 @@
             if (canalAtivo === "CONSOLIDADO_LADO_A_LADO") {
                 let theadHtml = '<th class="py-3 px-4 min-w-[240px] coluna-fixa bg-slate-100">Estrutura da DRE</th>';
                 const canaisComparacao = ["1) IFOOD", "2) APP/SITE", "3) MARKETPLACE", "CONSOLIDADO"];
-                const rotulosCurtos = { "1) IFOOD": "IFOOD", "2) APP/SITE": "APP/SITE", "3) MARKETPLACE": "MARKETPLACE", "CONSOLIDADO": "TOTAL GERAL" };
+                const rotulosCurtos = {
+                    "1) IFOOD": "IFOOD",
+                    "2) APP/SITE": "APP/SITE",
+                    "3) MARKETPLACE": "MARKETPLACE",
+                    "CONSOLIDADO": "TOTAL GERAL"
+                };
 
                 canaisComparacao.forEach(idC => {
                     theadHtml += `<th class="py-3 px-2 text-right border-l border-slate-300 font-bold bg-slate-100">${rotulosCurtos[idC]} (Acum.)</th>`;
@@ -421,20 +423,17 @@
 
                 function adicionarLinhaLadoALado(nome, seletorValor, isHeader = false, isSubtotal = false, forcarParenteses = false) {
                     let tr = document.createElement('tr');
-                    if (isHeader) {
-                        tr.className = 'bg-slate-100 font-bold text-slate-900';
-                    } else if (isSubtotal) {
-                        tr.className = 'bg-slate-50 font-semibold text-slate-800 border-t border-b border-slate-200';
-                    } else {
-                        tr.className = 'hover:bg-slate-50/80 transition';
-                    }
+                    if (isHeader) tr.className = 'bg-slate-100 font-bold text-slate-900';
+                    else if (isSubtotal) tr.className = 'bg-slate-50 font-semibold text-slate-800 border-t border-b border-slate-200';
+                    else tr.className = 'hover:bg-slate-50/80 transition';
 
                     let html = `<td class="px-4 py-2.5 coluna-fixa">${nome}</td>`;
+                    
                     canaisComparacao.forEach(idC => {
                         let acumuladoAno = dadosCanais[idC];
                         let valAcum = seletorValor(acumuladoAno);
-                        let baseAcumAV = acumuladoAno.receita_liquida > 0 ? acumuladoAno.receita_liquida : 1;
-                        let avAcum = (Math.abs(valAcum) / baseAcumAV) * 100;
+                        let baseAcumAV = acumuladoAno.receita_liquida !== 0 ? acumuladoAno.receita_liquida : 1;
+                        let avAcum = (valAcum / baseAcumAV) * 100;
                         let valAcumExibicao = forcarParenteses && valAcum > 0 ? -valAcum : valAcum;
 
                         html += `
@@ -442,6 +441,7 @@
                             <td class="py-2.5 px-2 text-right text-slate-500">${formatarPercentual(avAcum)}</td>
                         `;
                     });
+
                     tr.innerHTML = html;
                     tbody.appendChild(tr);
                 }
@@ -477,20 +477,17 @@
 
             function adicionarLinha(nome, seletorValor, isHeader = false, isSubtotal = false, forcarParenteses = false) {
                 let tr = document.createElement('tr');
-                if (isHeader) {
-                    tr.className = 'bg-slate-100 font-bold text-slate-900';
-                } else if (isSubtotal) {
-                    tr.className = 'bg-slate-50 font-semibold text-slate-800 border-t border-b border-slate-200';
-                } else {
-                    tr.className = 'hover:bg-slate-50/80 transition';
-                }
+                if (isHeader) tr.className = 'bg-slate-100 font-bold text-slate-900';
+                else if (isSubtotal) tr.className = 'bg-slate-50 font-semibold text-slate-800 border-t border-b border-slate-200';
+                else tr.className = 'hover:bg-slate-50/80 transition';
 
                 let html = `<td class="px-4 py-2.5 coluna-fixa">${nome}</td>`;
+
                 mesesAtivos.forEach(mes => {
                     let dm = dadosMes[mes];
                     let val = seletorValor(dm);
-                    let baseAV = dm.receita_liquida > 0 ? dm.receita_liquida : 1;
-                    let av = (Math.abs(val) / baseAV) * 100;
+                    let baseAV = dm.receita_liquida !== 0 ? dm.receita_liquida : 1;
+                    let av = (val / baseAV) * 100;
                     let valExibicao = forcarParenteses && val > 0 ? -val : val;
 
                     html += `
@@ -500,14 +497,15 @@
                 });
 
                 let valAcum = seletorValor(acumuladoAno);
-                let baseAcumAV = acumuladoAno.receita_liquida > 0 ? acumuladoAno.receita_liquida : 1;
-                let avAcum = (Math.abs(valAcum) / baseAcumAV) * 100;
+                let baseAcumAV = acumuladoAno.receita_liquida !== 0 ? acumuladoAno.receita_liquida : 1;
+                let avAcum = (valAcum / baseAcumAV) * 100;
                 let valAcumExibicao = forcarParenteses && valAcum > 0 ? -valAcum : valAcum;
 
                 html += `
                     <td class="py-2.5 px-3 text-right font-bold bg-slate-50">${formatarMoeda(valAcumExibicao)}</td>
                     <td class="py-2.5 px-3 text-right font-bold text-slate-600 bg-slate-50">${formatarPercentual(avAcum)}</td>
                 `;
+
                 tr.innerHTML = html;
                 tbody.appendChild(tr);
             }
