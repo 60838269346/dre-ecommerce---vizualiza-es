@@ -3,212 +3,229 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DRE Individualizada por Canal</title>
+    <title>DRE por Canal - Visão por Ano, Mês a Mês e Acumulado</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <style>
+        /* Congela a primeira coluna da DRE ao rolar para a direita */
         .coluna-fixa {
             position: sticky;
             left: 0;
-            background-color: white;
-            z-index: 10;
-        }
-        th.coluna-fixa {
             z-index: 20;
+            background-color: #ffffff;
         }
+        tr.bg-slate-100 .coluna-fixa { background-color: #f1f5f9; }
+        tr.bg-slate-50 .coluna-fixa { background-color: #f8fafc; }
+        tr:hover .coluna-fixa { background-color: #f8fafc; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans antialiased">
+<body class="bg-slate-50 text-slate-800 font-sans">
 
-    <!-- HEADER -->
-    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-30 shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <header class="bg-slate-900 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center space-x-3">
-                <div class="bg-emerald-600 p-2 rounded-lg text-white">
-                    <i class="fa-solid fa-chart-line text-lg"></i>
+                <div class="bg-emerald-600 p-2.5 rounded-lg text-white">
+                    <i class="fa-solid fa-chart-pie text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-white font-bold text-base leading-tight">DRE Gerencial por Canal</h1>
-                    <p class="text-xs text-slate-400">Visão Analítica e Consolidada</p>
+                    <h1 class="text-xl font-bold tracking-tight">DRE Individualizada por Fornecedor</h1>
+                    <p class="text-xs text-slate-400">Visão Anual, Mês a Mês, Análise Vertical e Acumulado (Nuvem Compartilhada)</p>
                 </div>
             </div>
-            <div class="flex items-center space-x-3">
-                <!-- Filtro de Ano -->
-                <div class="flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
-                    <span class="text-xs text-slate-400 font-medium">Ano:</span>
-                    <select id="filtro-ano" onchange="atualizarAnoFiltro()" class="bg-transparent text-white text-xs font-bold focus:outline-none cursor-pointer">
-                        <option value="2026" selected class="bg-slate-800 text-white">2026</option>
-                        <option value="2025" class="bg-slate-800 text-white">2025</option>
-                        <option value="2024" class="bg-slate-800 text-white">2024</option>
-                    </select>
-                </div>
-
-                <!-- Botão Administrador / Lançamentos -->
-                <button onclick="tentarAbrirAdmin()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
-                    <i class="fa-solid fa-lock-open text-xs"></i>
-                    <span>Lançamentos</span>
+            <div class="flex flex-wrap items-center gap-2">
+                <button onclick="exportarExcel()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition shadow-sm flex items-center space-x-1.5">
+                    <i class="fa-solid fa-file-excel text-emerald-400"></i>
+                    <span>Baixar Excel</span>
+                </button>
+                <button onclick="exportarPDF()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition shadow-sm flex items-center space-x-1.5">
+                    <i class="fa-solid fa-file-pdf text-red-400"></i>
+                    <span>Baixar PDF</span>
+                </button>
+                <button onclick="tentarAbrirAdmin()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm flex items-center space-x-2">
+                    <i class="fa-solid fa-plus-circle"></i>
+                    <span>Painel de Lançamentos</span>
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- CONTEÚDO PRINCIPAL -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        
-        <!-- SELETOR DE CANAIS -->
-        <div class="mb-6 flex flex-wrap gap-2 items-center" id="canais-botoes">
-            <!-- Gerado via JavaScript -->
+    <main class="max-w-7xl mx-auto px-4 py-8 space-y-6">
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Selecione o Fornecedor</h3>
+                <div id="canais-botoes" class="flex flex-wrap gap-2"></div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Exercício (Ano)</label>
+                <select id="filtro-ano" onchange="atualizarAnoFiltro()" class="border border-slate-300 rounded-lg p-2 text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    <option value="2026">2026</option>
+                    <option value="2025">2025</option>
+                    <option value="2024">2024</option>
+                </select>
+            </div>
         </div>
 
-        <!-- CARD DA TABELA -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/50">
+        <div id="dre-container-export" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-50/50 gap-2">
                 <div>
-                    <h2 id="titulo-dre-canal" class="text-base font-bold text-slate-900">DRE Detalhada</h2>
-                    <p id="badge-av-container" class="text-xs text-slate-500 mt-0.5">Base A.V.: Receita Líquida (100%)</p>
+                    <h2 id="titulo-dre-canal" class="font-bold text-slate-800 text-base">DRE - Fornecedor</h2>
+                    <p class="text-xs text-slate-500">Visão Mensal por Ano, Análise Vertical (%) sobre a Receita Líquida e Acumulado do Ano</p>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <button onclick="exportarExcel()" class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm">
-                        <i class="fa-solid fa-file-excel text-emerald-600"></i>
-                        <span>Exportar Excel</span>
-                    </button>
-                    <button onclick="exportarPDF()" class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm">
-                        <i class="fa-solid fa-print text-slate-600"></i>
-                        <span>Imprimir / PDF</span>
-                    </button>
+                <div id="badge-av-container" class="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-semibold border border-emerald-200">
+                    Base A.V.: Receita Líquida do Fornecedor (100%)
                 </div>
             </div>
-
+            
             <div class="overflow-x-auto">
-                <table id="tabela-dre-dados" class="w-full text-xs text-left border-collapse">
+                <table id="tabela-dre-dados" class="w-full text-left border-collapse text-xs">
                     <thead>
-                        <tr id="dre-thead-tr" class="border-b border-slate-200 text-slate-700 font-semibold bg-slate-50">
-                            <!-- Gerado via JavaScript -->
-                        </tr>
+                        <tr id="dre-thead-tr" class="bg-slate-100/70 text-slate-700 font-semibold border-b border-slate-200"></tr>
                     </thead>
-                    <tbody id="dre-table-body" class="divide-y divide-slate-100">
-                        <!-- Gerado via JavaScript -->
-                    </tbody>
+                    <tbody id="dre-table-body" class="divide-y divide-slate-100 text-slate-700"></tbody>
                 </table>
             </div>
         </div>
     </main>
 
-    <!-- MODAL DE ADMINISTRAÇÃO / LANÇAMENTOS -->
-    <div id="admin-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-2xl w-full overflow-hidden max-h-[90vh] flex flex-col">
-            <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <h3 class="font-bold text-slate-900 text-sm flex items-center space-x-2">
-                    <i class="fa-solid fa-pen-to-square text-emerald-600"></i>
-                    <span>Painel de Lançamentos DRE</span>
-                </h3>
-                <button onclick="toggleAdminModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
+    <div id="admin-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center shrink-0">
+                <h3 id="modal-titulo-texto" class="font-bold text-base"><i class="fa-solid fa-pen-to-square mr-2"></i> Painel de Lançamentos DRE</h3>
+                <button onclick="toggleAdminModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-
-            <div class="p-6 overflow-y-auto space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+            <div class="p-6 space-y-4 overflow-y-auto flex-1">
+                <input type="hidden" id="lanc-index-editando" value="-1">
+                
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                    <h4 id="form-titulo-painel" class="text-xs font-bold text-slate-700 uppercase tracking-wide">Novo Lançamento</h4>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Mês de Competência</label>
+                            <select id="lanc-mes" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                <option value="01">Janeiro</option>
+                                <option value="02">Fevereiro</option>
+                                <option value="03">Março</option>
+                                <option value="04">Abril</option>
+                                <option value="05">Maio</option>
+                                <option value="06">Junho</option>
+                                <option value="07">Julho</option>
+                                <option value="08">Agosto</option>
+                                <option value="09">Setembro</option>
+                                <option value="10">Outubro</option>
+                                <option value="11">Novembro</option>
+                                <option value="12">Dezembro</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Ano</label>
+                            <select id="lanc-ano" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                <option value="2026">2026</option>
+                                <option value="2025">2025</option>
+                                <option value="2024">2024</option>
+                            </select>
+                        </div>
+                    </div>
+                    
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Mês de Referência</label>
-                        <select id="lanc-mes" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:border-slate-400">
-                            <option value="01">01 - Janeiro</option>
-                            <option value="02">02 - Fevereiro</option>
-                            <option value="03">03 - Março</option>
-                            <option value="04">04 - Abril</option>
-                            <option value="05">05 - Maio</option>
-                            <option value="06">06 - Junho</option>
-                            <option value="07">07 - Julho</option>
-                            <option value="08">08 - Agosto</option>
-                            <option value="09">09 - Setembro</option>
-                            <option value="10">10 - Outubro</option>
-                            <option value="11">11 - Novembro</option>
-                            <option value="12">12 - Dezembro</option>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Selecione o Fornecedor</label>
+                        <select id="lanc-canal" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <option value="BOEHRINGER">BOEHRINGER</option>
+                            <option value="PREMIER">PREMIER</option>
+                            <option value="OURO FINO">OURO FINO</option>
+                            <option value="ORGANACT PET">ORGANACT PET</option>
+                            <option value="AVERT">AVERT</option>
+                            <option value="VANSIL">VANSIL</option>
                         </select>
                     </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Tipo de Linha na DRE</label>
+                            <select id="lanc-tipo" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                <option value="receita_bruta">Receita Bruta (Vendas)</option>
+                                <option value="impostos">(-) Impostos sobre Vendas</option>
+                                <option value="cmv">(-) CMV (Custo das Mercadorias)</option>
+                                <option value="pessoal">(-) Gastos com Pessoal</option>
+                                <option value="comercial">(-) Despesas Comerciais / Embalagens</option>
+                                <option value="fretes">(-) Frete / Entrega Cliente</option>
+                                <option value="administrativas">(-) Despesas Administrativas</option>
+                                <option value="tributarias">(-) Despesas Tributárias</option>
+                                <option value="outras_despesas">(-) Outras Despesas Operacionais</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Valor (R$)</label>
+                            <input type="text" id="lanc-valor" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="0.00">
+                        </div>
+                    </div>
+
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Ano</label>
-                        <select id="lanc-ano" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:border-slate-400">
-                            <option value="2026" selected>2026</option>
-                            <option value="2025">2025</option>
-                            <option value="2024">2024</option>
-                        </select>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Descrição / Histórico</label>
+                        <input type="text" id="lanc-desc" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="Ex: Faturamento...">
+                    </div>
+
+                    <div class="flex justify-end space-x-2 pt-1">
+                        <button id="btn-cancelar-edicao" onclick="limparFormularioEdicao()" class="hidden px-3 py-1.5 border border-slate-300 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-100">Cancelar Edição</button>
+                        <button onclick="salvarLancamento()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 shadow-sm">Salvar Lançamento</button>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Canal de Venda</label>
-                        <select id="lanc-canal" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:border-slate-400">
-                            <option value="1) IFOOD">1) IFOOD</option>
-                            <option value="2) APP/SITE">2) APP/SITE</option>
-                            <option value="3) MARKETPLACE">3) MARKETPLACE</option>
-                        </select>
+                <div class="space-y-3">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b border-slate-200 pb-2">
+                        <h4 class="text-xs font-bold text-slate-500 uppercase">Lançamentos por Mês</h4>
+                        <div class="flex items-center gap-2">
+                            <select id="filtro-mes-lancamentos" onchange="renderizarLancamentosRecentes()" class="border border-slate-300 rounded-lg p-1.5 text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                <option value="TODOS">Todos os Meses</option>
+                                <option value="01">Janeiro</option>
+                                <option value="02">Fevereiro</option>
+                                <option value="03">Março</option>
+                                <option value="04">Abril</option>
+                                <option value="05">Maio</option>
+                                <option value="06">Junho</option>
+                                <option value="07">Julho</option>
+                                <option value="08">Agosto</option>
+                                <option value="09">Setembro</option>
+                                <option value="10">Outubro</option>
+                                <option value="11">Novembro</option>
+                                <option value="12">Dezembro</option>
+                            </select>
+                            <button onclick="tentarLimparHistorico()" class="text-xs text-red-600 hover:text-red-800 font-semibold flex items-center gap-1 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg transition">
+                                <i class="fa-solid fa-trash-can"></i> Limpar Tudo
+                            </button>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Conta DRE / Categoria</label>
-                        <select id="lanc-tipo" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:border-slate-400">
-                            <option value="receita_bruta">Receita Bruta Total</option>
-                            <option value="impostos">(-) Impostos sobre Vendas</option>
-                            <option value="cmv">(-) Custo das Mercadorias Vendidas (CMV)</option>
-                            <option value="pessoal">(-) Gastos com Pessoal</option>
-                            <option value="comercial">(-) Despesas Comerciais / Embalagens</option>
-                            <option value="fretes">(-) Fretes / Entrega Cliente</option>
-                            <option value="administrativas">(-) Despesas Administrativas</option>
-                            <option value="tributarias">(-) Despesas Tributárias</option>
-                            <option value="outras_despesas">(-) Outras Despesas Operacionais</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Valor (R$)</label>
-                        <input type="text" id="lanc-valor" placeholder="0.00" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:border-slate-400">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Descrição / Observação</label>
-                        <input type="text" id="lanc-desc" placeholder="Ex: Fechamento quinzenal" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:border-slate-400">
-                    </div>
-                </div>
-
-                <div class="flex justify-end space-x-2 pt-2 border-t border-slate-100">
-                    <button onclick="cancelarEdicao()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-300">Cancelar Edição</button>
-                    <button onclick="adicionarLancamento()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 shadow-sm">Salvar Lançamento</button>
-                </div>
-
-                <div class="mt-4">
-                    <h4 class="text-xs font-bold text-slate-700 mb-2">Lançamentos Recentes (Agrupados por Mês)</h4>
-                    <div id="lista-lancamentos-recentes" class="space-y-2 max-h-48 overflow-y-auto text-xs bg-slate-50 p-3 rounded-lg border border-slate-200">
-                        <!-- Gerado via JavaScript -->
-                    </div>
+                    <div id="lista-lancamentos-recentes" class="max-h-56 overflow-y-auto space-y-1.5 text-xs text-slate-600 pr-1"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- SCRIPT DE CONTROLE -->
     <script>
-        // Utilizando o BIN ID original recuperado do seu histórico para garantir seus dados intactos
-        const BIN_ID = "67f0f78a26164d32f750b299"; 
+        const BIN_ID = "6a60f751da38895dfe805e30";
         const API_KEY = "$2a$10$2gRuysiXM85zMZ4OTG2dU.AEaN0WyPHJveZ2wy62/tqidY73EOJBS";
+        
         const mesesNomes = {
-            "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril", 
-            "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto", 
+            "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril",
+            "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto",
             "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro"
         };
+
         const canais = [
-            { id: "1) IFOOD", nome: "1) IFOOD" },
-            { id: "2) APP/SITE", nome: "2) APP/SITE" },
-            { id: "3) MARKETPLACE", nome: "3) MARKETPLACE" },
+            { id: "BOEHRINGER", nome: "BOEHRINGER" },
+            { id: "PREMIER", nome: "PREMIER" },
+            { id: "OURO FINO", nome: "OURO FINO" },
+            { id: "ORGANACT PET", nome: "ORGANACT PET" },
+            { id: "AVERT", nome: "AVERT" },
+            { id: "VANSIL", nome: "VANSIL" },
             { id: "CONSOLIDADO", nome: "CONSOLIDADO (TOTAL)" },
             { id: "CONSOLIDADO_LADO_A_LADO", nome: "📊 CONSOLIDADO LADO A LADO" }
         ];
-        let canalAtivo = "1) IFOOD";
+
+        let canalAtivo = "BOEHRINGER";
         let anoAtivo = "2026";
         let lancamentos = [];
-        let adminAutenticado = false; 
-        let editandoIndex = null;     
 
         async function carregarDadosDaNuvem() {
             try {
@@ -243,18 +260,70 @@
             }
         }
 
-        function tentarAbrirAdmin() {
-            if (adminAutenticado) {
-                toggleAdminModal();
-                return;
-            }
-            let senha = prompt("Acesso restrito. Digite a senha para realizar o lançamento:");
+        function tentarLimparHistorico() {
+            let senha = prompt("Ação restrita! Digite a senha para confirmar a limpeza total do histórico:");
             if (senha === "0") {
-                adminAutenticado = true;
-                toggleAdminModal();
+                if (confirm("Tem certeza absoluta? Todos os lançamentos salvos na nuvem serão apagados permanentemente.")) {
+                    limparHistoricoNuvem();
+                }
             } else if (senha !== null) {
-                alert("Senha incorreta! Apenas você pode realizar lançamentos.");
+                alert("Senha incorreta! A limpeza foi cancelada.");
             }
+        }
+
+        async function limparHistoricoNuvem() {
+            lancamentos = [];
+            await salvarDadosNaNuvem();
+            limparFormularioEdicao();
+            renderizarLancamentosRecentes();
+            calcularEAtualizarDRE();
+            alert("Histórico limpo com sucesso!");
+        }
+
+        function tentarAbrirAdmin() {
+            let senha = prompt("Acesso restrito. Digite a senha para abrir o painel de lançamentos:");
+            if (senha === "0") {
+                abrirPainelAdmin();
+            } else if (senha !== null) {
+                alert("Senha incorreta! Apenas você pode gerenciar lançamentos.");
+            }
+        }
+
+        function abrirPainelAdmin() {
+            limparFormularioEdicao();
+            const modal = document.getElementById('admin-modal');
+            modal.classList.remove('hidden');
+            renderizarLancamentosRecentes();
+        }
+
+        function limparFormularioEdicao() {
+            document.getElementById('lanc-index-editando').value = "-1";
+            document.getElementById('form-titulo-painel').innerText = "Novo Lançamento";
+            document.getElementById('btn-cancelar-edicao').classList.add('hidden');
+            document.getElementById('lanc-valor').value = "";
+            document.getElementById('lanc-desc').value = "";
+            document.getElementById('lanc-ano').value = anoAtivo;
+            if (canalAtivo !== "CONSOLIDADO" && canalAtivo !== "CONSOLIDADO_LADO_A_LADO") {
+                document.getElementById('lanc-canal').value = canalAtivo;
+            }
+        }
+
+        function abrirEdicaoNoPainel(realIdx) {
+            let l = lancamentos[realIdx];
+            if (!l) return;
+            document.getElementById('lanc-index-editando').value = realIdx;
+            document.getElementById('form-titulo-painel').innerText = "Editando Lançamento (Índice #" + realIdx + ")";
+            document.getElementById('btn-cancelar-edicao').classList.remove('hidden');
+            document.getElementById('lanc-mes').value = l.mes || "01";
+            document.getElementById('lanc-ano').value = l.ano || "2026";
+            document.getElementById('lanc-canal').value = l.canal || "BOEHRINGER";
+            document.getElementById('lanc-tipo').value = l.tipo || "receita_bruta";
+            document.getElementById('lanc-valor').value = l.valor;
+            document.getElementById('lanc-desc').value = l.desc || "";
+            
+            // Rolar painel para o topo para ver o formulário preenchido
+            const modalBody = document.querySelector('#admin-modal .overflow-y-auto');
+            if (modalBody) modalBody.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function formatarMoeda(valor, isTotalizador = false) {
@@ -278,7 +347,9 @@
             canais.forEach(c => {
                 let btn = document.createElement('button');
                 let isActive = c.id === canalAtivo;
-                btn.className = `px-4 py-2.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center space-x-2 ${isActive ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`;
+                btn.className = `px-4 py-2.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center space-x-2 ${
+                    isActive ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`;
                 btn.innerHTML = `<span>${c.nome}</span>`;
                 btn.onclick = () => {
                     canalAtivo = c.id;
@@ -297,13 +368,9 @@
         function toggleAdminModal() {
             const modal = document.getElementById('admin-modal');
             modal.classList.toggle('hidden');
-            if (!modal.classList.contains('hidden')) {
-                cancelarEdicao(); 
-                renderizarLancamentosRecentes();
-            }
         }
 
-        async function adicionarLancamento() {
+        async function salvarLancamento() {
             const mes = document.getElementById('lanc-mes').value;
             const ano = document.getElementById('lanc-ano').value;
             const canal = document.getElementById('lanc-canal').value;
@@ -311,13 +378,14 @@
             let valorStr = document.getElementById('lanc-valor').value.trim().replace(',', '.');
             let valor = parseFloat(valorStr);
             const desc = document.getElementById('lanc-desc').value || "Lançamento DRE";
+            const indexEditando = parseInt(document.getElementById('lanc-index-editando').value);
 
             if (isNaN(valor) || valor <= 0) {
                 alert('Por favor, informe um valor numérico válido.');
                 return;
             }
 
-            const novoItem = {
+            let novoObj = {
                 canal: String(canal).trim(),
                 tipo: String(tipo).trim(),
                 valor: Number(valor),
@@ -326,60 +394,29 @@
                 ano: String(ano)
             };
 
-            if (editandoIndex !== null) {
-                lancamentos[editandoIndex] = novoItem;
-                editandoIndex = null;
+            if (indexEditando >= 0 && indexEditando < lancamentos.length) {
+                lancamentos[indexEditando] = novoObj;
             } else {
-                lancamentos.push(novoItem);
+                lancamentos.push(novoObj);
             }
 
             await salvarDadosNaNuvem();
             
-            document.getElementById('lanc-valor').value = '';
-            document.getElementById('lanc-desc').value = '';
-            
+            // Mantém o painel aberto permitindo incluir mais lançamentos seguidos sem reabrir/senha
+            limparFormularioEdicao();
             document.getElementById('filtro-ano').value = ano;
             anoAtivo = String(ano);
             canalAtivo = String(canal);
-            
             renderizarBotoesCanais();
             calcularEAtualizarDRE();
             renderizarLancamentosRecentes();
-        }
-
-        function editarLancamento(index) {
-            const l = lancamentos[index];
-            if (!l) return;
-
-            document.getElementById('lanc-mes').value = l.mes;
-            document.getElementById('lanc-ano').value = l.ano;
-            document.getElementById('lanc-canal').value = l.canal;
-            document.getElementById('lanc-tipo').value = l.tipo;
-            document.getElementById('lanc-valor').value = l.valor;
-            document.getElementById('lanc-desc').value = l.desc;
-            
-            editandoIndex = index;
-            
-            const btnSalvar = document.querySelector('button[onclick="adicionarLancamento()"]');
-            btnSalvar.innerText = "Atualizar Lançamento";
-            btnSalvar.className = "px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 shadow-sm";
-        }
-
-        function cancelarEdicao() {
-            editandoIndex = null;
-            document.getElementById('lanc-valor').value = '';
-            document.getElementById('lanc-desc').value = '';
-            const btnSalvar = document.querySelector('button[onclick="adicionarLancamento()"]');
-            if (btnSalvar) {
-                btnSalvar.innerText = "Salvar Lançamento";
-                btnSalvar.className = "px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 shadow-sm";
-            }
         }
 
         async function removerLancamento(index) {
             if (confirm("Deseja realmente excluir este lançamento?")) {
                 lancamentos.splice(index, 1);
                 await salvarDadosNaNuvem();
+                limparFormularioEdicao();
                 renderizarLancamentosRecentes();
                 calcularEAtualizarDRE();
             }
@@ -387,55 +424,55 @@
 
         function renderizarLancamentosRecentes() {
             const container = document.getElementById('lista-lancamentos-recentes');
+            const mesFiltro = document.getElementById('filtro-mes-lancamentos').value;
             container.innerHTML = '';
-
+            
             if (lancamentos.length === 0) {
-                container.innerHTML = '<p class="text-slate-400">Nenhum lançamento registrado.</p>';
+                container.innerHTML = '<p class="text-slate-400 py-2">Nenhum lançamento registrado.</p>';
                 return;
             }
 
-            let agrupados = {};
-            lancamentos.forEach((l, idx) => {
-                let chaveAno = l.ano || "2026";
-                let chaveMes = l.mes || "01";
-                if (!agrupados[chaveAno]) agrupados[chaveAno] = {};
-                if (!agrupados[chaveAno][chaveMes]) agrupados[chaveAno][chaveMes] = [];
-                agrupados[chaveAno][chaveMes].push({ ...l, originalIndex: idx });
+            let lancamentosFiltrados = [];
+            lancamentos.slice().reverse().forEach((l, idx) => {
+                const realIdx = lancamentos.length - 1 - idx;
+                if (mesFiltro === "TODOS" || l.mes === mesFiltro) {
+                    lancamentosFiltrados.push({ l, realIdx });
+                }
             });
 
-            Object.keys(agrupados).sort().reverse().forEach(ano => {
-                Object.keys(agrupados[ano]).sort().forEach(mes => {
-                    let divMes = document.createElement('div');
-                    divMes.className = 'mb-3';
-                    
-                    let tituloMes = document.createElement('div');
-                    tituloMes.className = 'font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded text-xs mb-1';
-                    tituloMes.innerText = `${mesesNomes[mes]} / ${ano}`;
-                    divMes.appendChild(tituloMes);
+            if (lancamentosFiltrados.length === 0) {
+                container.innerHTML = `<p class="text-slate-400 py-2">Nenhum lançamento para o mês de ${mesesNomes[mesFiltro] || mesFiltro}.</p>`;
+                return;
+            }
 
-                    agrupados[ano][mes].forEach(l => {
-                        let canalObj = canais.find(c => c.id === l.canal);
-                        let itemDiv = document.createElement('div');
-                        itemDiv.className = 'flex justify-between items-center bg-white p-2 rounded border border-slate-200 mb-1';
-                        itemDiv.innerHTML = `
-                            <span class="truncate pr-2"><strong>${canalObj?.nome || l.canal}</strong> - ${l.tipo} (${l.desc}): ${formatarMoeda(l.valor)}</span>
-                            <div class="flex space-x-2 shrink-0">
-                                <button onclick="editarLancamento(${l.originalIndex})" class="text-blue-500 hover:text-blue-700" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                                <button onclick="removerLancamento(${l.originalIndex})" class="text-red-500 hover:text-red-700" title="Excluir"><i class="fa-solid fa-trash"></i></button>
-                            </div>`;
-                        divMes.appendChild(itemDiv);
-                    });
-
-                    container.appendChild(divMes);
-                });
+            lancamentosFiltrados.forEach(item => {
+                const l = item.l;
+                const realIdx = item.realIdx;
+                const canalObj = canais.find(c => c.id === l.canal);
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center bg-white p-2.5 rounded-lg border border-slate-200 gap-2 shadow-xs';
+                div.innerHTML = `
+                    <div class="truncate">
+                        <span class="inline-block bg-slate-100 text-slate-700 font-bold px-1.5 py-0.5 rounded mr-1">${l.mes}/${l.ano}</span>
+                        <strong>${canalObj?.nome || l.canal}</strong> - <span class="text-slate-500">${l.tipo}</span>: <span class="font-semibold text-slate-800">${formatarMoeda(l.valor)}</span>
+                        ${l.desc ? `<div class="text-slate-400 text-[10px] truncate">${l.desc}</div>` : ''}
+                    </div>
+                    <div class="flex items-center space-x-1.5 shrink-0">
+                        <button onclick="abrirEdicaoNoPainel(${realIdx})" class="text-blue-500 hover:text-blue-700 p-1.5 bg-blue-50 hover:bg-blue-100 rounded transition" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="removerLancamento(${realIdx})" class="text-red-500 hover:text-red-700 p-1.5 bg-red-50 hover:bg-red-100 rounded transition" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                    </div>`;
+                container.appendChild(div);
             });
         }
 
         function calcularDadosCanalParaAno(nomeCanal, ano) {
             let mesesAtivos = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
             let lancsCanalAno = [];
+            
+            const fornecedoresOficiais = ["BOEHRINGER", "PREMIER", "OURO FINO", "ORGANACT PET", "AVERT", "VANSIL"];
+
             if (nomeCanal === "CONSOLIDADO") {
-                lancsCanalAno = lancamentos.filter(l => l.ano === ano);
+                lancsCanalAno = lancamentos.filter(l => l.ano === ano && fornecedoresOficiais.includes(l.canal));
             } else {
                 lancsCanalAno = lancamentos.filter(l => l.canal === nomeCanal && l.ano === ano);
             }
@@ -485,14 +522,14 @@
         function calcularEAtualizarDRE() {
             const objCanalAtivo = canais.find(c => c.id === canalAtivo) || canais[0];
             document.getElementById('titulo-dre-canal').innerText = `DRE Detalhada - ${objCanalAtivo.nome} (${anoAtivo})`;
-            
+
             const badgeContainer = document.getElementById('badge-av-container');
             if (canalAtivo === "CONSOLIDADO") {
                 badgeContainer.innerText = "Base A.V.: Receita Líquida Consolidada (100%)";
             } else if (canalAtivo === "CONSOLIDADO_LADO_A_LADO") {
-                badgeContainer.innerText = "Visão Lado a Lado: IFOOD | APP/SITE | MARKETPLACE | CONSOLIDADO (Com A.V. individual)";
+                badgeContainer.innerText = "Visão Lado a Lado: Todos os Fornecedores | Consolidado (Com A.V. individual)";
             } else {
-                badgeContainer.innerText = "Base A.V.: Receita Líquida do Canal (100%)";
+                badgeContainer.innerText = "Base A.V.: Receita Líquida do Fornecedor (100%)";
             }
 
             const theadTr = document.getElementById('dre-thead-tr');
@@ -501,12 +538,10 @@
 
             if (canalAtivo === "CONSOLIDADO_LADO_A_LADO") {
                 let theadHtml = '<th class="py-3 px-4 min-w-[240px] coluna-fixa bg-slate-100">Estrutura da DRE</th>';
-                const canaisComparacao = ["1) IFOOD", "2) APP/SITE", "3) MARKETPLACE", "CONSOLIDADO"];
+                const canaisComparacao = ["BOEHRINGER", "PREMIER", "OURO FINO", "ORGANACT PET", "AVERT", "VANSIL", "CONSOLIDADO"];
                 const rotulosCurtos = {
-                    "1) IFOOD": "IFOOD",
-                    "2) APP/SITE": "APP/SITE",
-                    "3) MARKETPLACE": "MARKETPLACE",
-                    "CONSOLIDADO": "TOTAL GERAL"
+                    "BOEHRINGER": "BOEHRINGER", "PREMIER": "PREMIER", "OURO FINO": "OURO FINO",
+                    "ORGANACT PET": "ORGANACT", "AVERT": "AVERT", "VANSIL": "VANSIL", "CONSOLIDADO": "TOTAL GERAL"
                 };
 
                 canaisComparacao.forEach(idC => {
@@ -627,10 +662,10 @@
             const tabela = document.getElementById("tabela-dre-dados");
             let csv = [];
             for (let i = 0; i < tabela.rows.length; i++) {
-                let row = [], cols = tabela.rows[i].querySelectorAll("th, td");
+                let row = [], cols = tabela.rows[i].querySelectorAll("td, th");
                 for (let j = 0; j < cols.length; j++) {
-                    let texto = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").replace(/;/g, ",");
-                    row.push('"' + texto + '"');
+                    let text = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").replace(/(\s\s)/gm, " ");
+                    row.push('"' + text + '"');
                 }
                 csv.push(row.join(";"));
             }
@@ -647,4 +682,3 @@
         carregarDadosDaNuvem();
     </script>
 </body>
-</html>
