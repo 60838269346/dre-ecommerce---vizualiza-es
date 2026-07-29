@@ -228,14 +228,23 @@
             }
         }
 
-        function formatarMoeda(valor) {
+        function formatarMoeda(valor, isTotalizador = false) {
             let absVal = Math.abs(valor);
-            let formatado = absVal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }).replace(/\s/g, '');
-            return valor < 0 ? `(${formatado})` : formatado;
+            // Formata o número tirando o prefixo "R$" gerado pelo estilo de moeda
+            let formatado = absVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            let textoFinal = valor < 0 ? `(${formatado})` : formatado;
+            
+            // Aplica negrito automático se for totalizador/subtotal
+            if (isTotalizador) {
+                return valor < 0 ? `<span class="font-bold text-red-600">(${formatado})</span>` : `<span class="font-bold">${formatado}</span>`;
+            }
+            
+            return valor < 0 ? `<span class="text-red-600 font-medium">(${formatado})</span>` : formatado;
         }
 
-        function formatarPercentual(valor) {
-            return valor.toFixed(2).replace('.', ',') + '%';
+        function formatarPercentual(valor, isTotalizador = false) {
+            let formatado = valor.toFixed(2).replace('.', ',') + '%';
+            return isTotalizador ? `<span class="font-bold">${formatado}</span>` : formatado;
         }
 
         function renderizarBotoesCanais() {
@@ -428,8 +437,8 @@
                         let avAcum = (valAcum / baseAcumAV) * 100;
                         let valAcumExibicao = forcarParenteses && valAcum > 0 ? -valAcum : valAcum;
                         html += `
-                            <td class="py-2.5 px-2 text-right font-medium border-l border-slate-200">${formatarMoeda(valAcumExibicao)}</td>
-                            <td class="py-2.5 px-2 text-right text-slate-500">${formatarPercentual(avAcum)}</td>
+                            <td class="py-2.5 px-2 text-right font-medium border-l border-slate-200">${formatarMoeda(valAcumExibicao, isHeader || isSubtotal)}</td>
+                            <td class="py-2.5 px-2 text-right text-slate-500">${formatarPercentual(avAcum, isHeader || isSubtotal)}</td>
                         `;
                     });
                     tr.innerHTML = html;
@@ -459,7 +468,7 @@
 
             let theadHtml = '<th class="py-3 px-4 min-w-[240px] coluna-fixa bg-slate-100">Estrutura da DRE</th>';
             mesesAtivos.forEach(mes => {
-                theadHtml += `<th class="py-3 px-2 text-right">${mesesNomes[mes].substring(0,3)} (R$)</th><th class="py-3 px-2 text-right">A.V.</th>`;
+                theadHtml += `<th class="py-3 px-2 text-right">${mesesNomes[mes].substring(0,3)}</th><th class="py-3 px-2 text-right">A.V.</th>`;
             });
             theadHtml += `<th class="py-3 px-3 text-right bg-slate-200/60">Acumulado (${anoAtivo})</th><th class="py-3 px-3 text-right bg-slate-200/60">A.V. Acum.</th>`;
             theadTr.innerHTML = theadHtml;
@@ -478,8 +487,8 @@
                     let av = (val / baseAV) * 100;
                     let valExibicao = forcarParenteses && val > 0 ? -val : val;
                     html += `
-                        <td class="py-2.5 px-2 text-right font-medium">${formatarMoeda(valExibicao)}</td>
-                        <td class="py-2.5 px-2 text-right text-slate-500">${formatarPercentual(av)}</td>
+                        <td class="py-2.5 px-2 text-right font-medium">${formatarMoeda(valExibicao, isHeader || isSubtotal)}</td>
+                        <td class="py-2.5 px-2 text-right text-slate-500">${formatarPercentual(av, isHeader || isSubtotal)}</td>
                     `;
                 });
 
@@ -489,8 +498,8 @@
                 let valAcumExibicao = forcarParenteses && valAcum > 0 ? -valAcum : valAcum;
 
                 html += `
-                    <td class="py-2.5 px-3 text-right font-bold bg-slate-50">${formatarMoeda(valAcumExibicao)}</td>
-                    <td class="py-2.5 px-3 text-right font-bold text-slate-600 bg-slate-50">${formatarPercentual(avAcum)}</td>
+                    <td class="py-2.5 px-3 text-right font-bold bg-slate-50">${formatarMoeda(valAcumExibicao, true)}</td>
+                    <td class="py-2.5 px-3 text-right font-bold text-slate-600 bg-slate-50">${formatarPercentual(avAcum, true)}</td>
                 `;
                 tr.innerHTML = html;
                 tbody.appendChild(tr);
