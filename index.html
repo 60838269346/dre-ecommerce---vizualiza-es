@@ -230,16 +230,14 @@
 
         function formatarMoeda(valor, isTotalizador = false) {
             let absVal = Math.abs(valor);
-            // Formata o número tirando o prefixo "R$" gerado pelo estilo de moeda
             let formatado = absVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             let textoFinal = valor < 0 ? `(${formatado})` : formatado;
             
-            // Aplica negrito automático se for totalizador/subtotal
             if (isTotalizador) {
-                return valor < 0 ? `<span class="font-bold text-red-600">(${formatado})</span>` : `<span class="font-bold">${formatado}</span>`;
+                return `<span class="font-bold">${textoFinal}</span>`;
             }
             
-            return valor < 0 ? `<span class="text-red-600 font-medium">(${formatado})</span>` : formatado;
+            return `<span class="font-medium">${textoFinal}</span>`;
         }
 
         function formatarPercentual(valor, isTotalizador = false) {
@@ -437,7 +435,7 @@
                         let avAcum = (valAcum / baseAcumAV) * 100;
                         let valAcumExibicao = forcarParenteses && valAcum > 0 ? -valAcum : valAcum;
                         html += `
-                            <td class="py-2.5 px-2 text-right font-medium border-l border-slate-200">${formatarMoeda(valAcumExibicao, isHeader || isSubtotal)}</td>
+                            <td class="py-2.5 px-2 text-right border-l border-slate-200">${formatarMoeda(valAcumExibicao, isHeader || isSubtotal)}</td>
                             <td class="py-2.5 px-2 text-right text-slate-500">${formatarPercentual(avAcum, isHeader || isSubtotal)}</td>
                         `;
                     });
@@ -487,7 +485,7 @@
                     let av = (val / baseAV) * 100;
                     let valExibicao = forcarParenteses && val > 0 ? -val : val;
                     html += `
-                        <td class="py-2.5 px-2 text-right font-medium">${formatarMoeda(valExibicao, isHeader || isSubtotal)}</td>
+                        <td class="py-2.5 px-2 text-right">${formatarMoeda(valExibicao, isHeader || isSubtotal)}</td>
                         <td class="py-2.5 px-2 text-right text-slate-500">${formatarPercentual(av, isHeader || isSubtotal)}</td>
                     `;
                 });
@@ -498,8 +496,8 @@
                 let valAcumExibicao = forcarParenteses && valAcum > 0 ? -valAcum : valAcum;
 
                 html += `
-                    <td class="py-2.5 px-3 text-right font-bold bg-slate-50">${formatarMoeda(valAcumExibicao, true)}</td>
-                    <td class="py-2.5 px-3 text-right font-bold text-slate-600 bg-slate-50">${formatarPercentual(avAcum, true)}</td>
+                    <td class="py-2.5 px-3 text-right bg-slate-50">${formatarMoeda(valAcumExibicao, true)}</td>
+                    <td class="py-2.5 px-3 text-right text-slate-600 bg-slate-50">${formatarPercentual(avAcum, true)}</td>
                 `;
                 tr.innerHTML = html;
                 tbody.appendChild(tr);
