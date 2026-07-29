@@ -1,465 +1,649 @@
-<script>
-    const BIN_ID = "6a60f751da38895dfe805e30";
-    const API_KEY = "$2a$10$2gRuysiXM85zMZ4OTG2dU.AEaN0WyPHJveZ2wy62/tqidY73EOJBS";
-    const mesesNomes = {
-        "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril", 
-        "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto", 
-        "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro"
-    };
-    const canais = [
-        { id: "1) IFOOD", nome: "1) IFOOD" },
-        { id: "2) APP/SITE", nome: "2) APP/SITE" },
-        { id: "3) MARKETPLACE", nome: "3) MARKETPLACE" },
-        { id: "CONSOLIDADO", nome: "CONSOLIDADO (TOTAL)" },
-        { id: "CONSOLIDADO_LADO_A_LADO", nome: "📊 CONSOLIDADO LADO A LADO" }
-    ];
-    let canalAtivo = "1) IFOOD";
-    let anoAtivo = "2026";
-    let lancamentos = [];
-    let adminAutenticado = false; // Controle de sessão da senha
-    let editandoIndex = null;     // Controle se estamos editando um lançamento existente
-
-    async function carregarDadosDaNuvem() {
-        try {
-            let resposta = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-                headers: { 'X-Master-Key': API_KEY }
-            });
-            if (resposta.ok) {
-                let resultado = await resposta.json();
-                if (resultado.record && Array.isArray(resultado.record.lancamentos)) {
-                    lancamentos = resultado.record.lancamentos;
-                }
-            }
-        } catch (e) {
-            console.error("Erro ao carregar da nuvem, usando dados vazios.", e);
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DRE Individualizada por Canal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .coluna-fixa {
+            position: sticky;
+            left: 0;
+            background-color: white;
+            z-index: 10;
         }
-        renderizarBotoesCanais();
-        calcularEAtualizarDRE();
-    }
-
-    async function salvarDadosNaNuvem() {
-        try {
-            await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': API_KEY
-                },
-                body: JSON.stringify({ lancamentos: lancamentos })
-            });
-        } catch (e) {
-            console.error("Erro ao salvar na nuvem.", e);
+        th.coluna-fixa {
+            z-index: 20;
         }
-    }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased">
 
-    function tentarAbrirAdmin() {
-        if (adminAutenticado) {
-            toggleAdminModal();
-            return;
-        }
-        let senha = prompt("Acesso restrito. Digite a senha para realizar o lançamento:");
-        if (senha === "0") {
-            adminAutenticado = true;
-            toggleAdminModal();
-        } else if (senha !== null) {
-            alert("Senha incorreta! Apenas você pode realizar lançamentos.");
-        }
-    }
+    <!-- HEADER -->
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-30 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-emerald-600 p-2 rounded-lg text-white">
+                    <i class="fa-solid fa-chart-line text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-white font-bold text-base leading-tight">DRE Gerencial por Canal</h1>
+                    <p class="text-xs text-slate-400">Visão Analítica e Consolidada</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <!-- Filtro de Ano -->
+                <div class="flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+                    <span class="text-xs text-slate-400 font-medium">Ano:</span>
+                    <select id="filtro-ano" onchange="atualizarAnoFiltro()" class="bg-transparent text-white text-xs font-bold focus:outline-none cursor-pointer">
+                        <option value="2026" selected class="bg-slate-800 text-white">2026</option>
+                        <option value="2025" class="bg-slate-800 text-white">2025</option>
+                        <option value="2024" class="bg-slate-800 text-white">2024</option>
+                    </select>
+                </div>
 
-    function formatarMoeda(valor, isTotalizador = false) {
-        let absVal = Math.abs(valor);
-        let formatado = absVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        let textoFinal = valor < 0 ? `(${formatado})` : formatado;
-        if (isTotalizador) {
-            return `<span class="font-bold">${textoFinal}</span>`;
-        }
-        return `<span class="font-medium">${textoFinal}</span>`;
-    }
+                <!-- Botão Administrador / Lançamentos -->
+                <button onclick="tentarAbrirAdmin()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
+                    <i class="fa-solid fa-lock-open text-xs"></i>
+                    <span>Lançamentos</span>
+                </button>
+            </div>
+        </div>
+    </header>
 
-    function formatarPercentual(valor, isTotalizador = false) {
-        let formatado = valor.toFixed(2).replace('.', ',') + '%';
-        return isTotalizador ? `<span class="font-bold">${formatado}</span>` : formatado;
-    }
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- SELETOR DE CANAIS -->
+        <div class="mb-6 flex flex-wrap gap-2 items-center" id="canais-botoes">
+            <!-- Gerado via JavaScript -->
+        </div>
 
-    function renderizarBotoesCanais() {
-        const container = document.getElementById('canais-botoes');
-        container.innerHTML = '';
-        canais.forEach(c => {
-            let btn = document.createElement('button');
-            let isActive = c.id === canalAtivo;
-            btn.className = `px-4 py-2.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center space-x-2 ${isActive ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`;
-            btn.innerHTML = `<span>${c.nome}</span>`;
-            btn.onclick = () => {
-                canalAtivo = c.id;
-                renderizarBotoesCanais();
-                calcularEAtualizarDRE();
-            };
-            container.appendChild(btn);
-        });
-    }
+        <!-- CARD DA TABELA -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/50">
+                <div>
+                    <h2 id="titulo-dre-canal" class="text-base font-bold text-slate-900">DRE Detalhada</h2>
+                    <p id="badge-av-container" class="text-xs text-slate-500 mt-0.5">Base A.V.: Receita Líquida (100%)</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="exportarExcel()" class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm">
+                        <i class="fa-solid fa-file-excel text-emerald-600"></i>
+                        <span>Exportar Excel</span>
+                    </button>
+                    <button onclick="exportarPDF()" class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm">
+                        <i class="fa-solid fa-print text-slate-600"></i>
+                        <span>Imprimir / PDF</span>
+                    </button>
+                </div>
+            </div>
 
-    function atualizarAnoFiltro() {
-        anoAtivo = document.getElementById('filtro-ano').value;
-        calcularEAtualizarDRE();
-    }
+            <div class="overflow-x-auto">
+                <table id="tabela-dre-dados" class="w-full text-xs text-left border-collapse">
+                    <thead>
+                        <tr id="dre-thead-tr" class="border-b border-slate-200 text-slate-700 font-semibold bg-slate-50">
+                            <!-- Gerado via JavaScript -->
+                        </tr>
+                    </thead>
+                    <tbody id="dre-table-body" class="divide-y divide-slate-100">
+                        <!-- Gerado via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
 
-    function toggleAdminModal() {
-        const modal = document.getElementById('admin-modal');
-        modal.classList.toggle('hidden');
-        if (!modal.classList.contains('hidden')) {
-            cancelarEdicao(); // Limpa estado ao abrir
-            renderizarLancamentosRecentes();
-        }
-    }
+    <!-- MODAL DE ADMINISTRAÇÃO / LANÇAMENTOS -->
+    <div id="admin-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-2xl w-full overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-900 text-sm flex items-center space-x-2">
+                    <i class="fa-solid fa-pen-to-square text-emerald-600"></i>
+                    <span>Painel de Lançamentos DRE</span>
+                </h3>
+                <button onclick="toggleAdminModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
 
-    async function adicionarLancamento() {
-        const mes = document.getElementById('lanc-mes').value;
-        const ano = document.getElementById('lanc-ano').value;
-        const canal = document.getElementById('lanc-canal').value;
-        const tipo = document.getElementById('lanc-tipo').value;
-        let valorStr = document.getElementById('lanc-valor').value.trim().replace(',', '.');
-        let valor = parseFloat(valorStr);
-        const desc = document.getElementById('lanc-desc').value || "Lançamento DRE";
+            <div class="p-6 overflow-y-auto space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Mês de Referência</label>
+                        <select id="lanc-mes" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:border-slate-400">
+                            <option value="01">01 - Janeiro</option>
+                            <option value="02">02 - Fevereiro</option>
+                            <option value="03">03 - Março</option>
+                            <option value="04">04 - Abril</option>
+                            <option value="05">05 - Maio</option>
+                            <option value="06">06 - Junho</option>
+                            <option value="07">07 - Julho</option>
+                            <option value="08">08 - Agosto</option>
+                            <option value="09">09 - Setembro</option>
+                            <option value="10">10 - Outubro</option>
+                            <option value="11">11 - Novembro</option>
+                            <option value="12">12 - Dezembro</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Ano</label>
+                        <select id="lanc-ano" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:border-slate-400">
+                            <option value="2026" selected>2026</option>
+                            <option value="2025">2025</option>
+                            <option value="2024">2024</option>
+                        </select>
+                    </div>
+                </div>
 
-        if (isNaN(valor) || valor <= 0) {
-            alert('Por favor, informe um valor numérico válido.');
-            return;
-        }
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Canal de Venda</label>
+                        <select id="lanc-canal" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:border-slate-400">
+                            <option value="1) IFOOD">1) IFOOD</option>
+                            <option value="2) APP/SITE">2) APP/SITE</option>
+                            <option value="3) MARKETPLACE">3) MARKETPLACE</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Conta DRE / Categoria</label>
+                        <select id="lanc-tipo" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:border-slate-400">
+                            <option value="receita_bruta">Receita Bruta Total</option>
+                            <option value="impostos">(-) Impostos sobre Vendas</option>
+                            <option value="cmv">(-) Custo das Mercadorias Vendidas (CMV)</option>
+                            <option value="pessoal">(-) Gastos com Pessoal</option>
+                            <option value="comercial">(-) Despesas Comerciais / Embalagens</option>
+                            <option value="fretes">(-) Fretes / Entrega Cliente</option>
+                            <option value="administrativas">(-) Despesas Administrativas</option>
+                            <option value="tributarias">(-) Despesas Tributárias</option>
+                            <option value="outras_despesas">(-) Outras Despesas Operacionais</option>
+                        </select>
+                    </div>
+                </div>
 
-        const novoItem = {
-            canal: String(canal).trim(),
-            tipo: String(tipo).trim(),
-            valor: Number(valor),
-            desc,
-            mes: String(mes),
-            ano: String(ano)
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Valor (R$)</label>
+                        <input type="text" id="lanc-valor" placeholder="0.00" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:border-slate-400">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Descrição / Observação</label>
+                        <input type="text" id="lanc-desc" placeholder="Ex: Fechamento quinzenal" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:border-slate-400">
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-2 border-t border-slate-100">
+                    <button onclick="cancelarEdicao()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-300">Cancelar Edição</button>
+                    <button onclick="adicionarLancamento()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 shadow-sm">Salvar Lançamento</button>
+                </div>
+
+                <div class="mt-4">
+                    <h4 class="text-xs font-bold text-slate-700 mb-2">Lançamentos Recentes (Agrupados por Mês)</h4>
+                    <div id="lista-lancamentos-recentes" class="space-y-2 max-h-48 overflow-y-auto text-xs bg-slate-50 p-3 rounded-lg border border-slate-200">
+                        <!-- Gerado via JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE CONTROLE -->
+    <script>
+        const BIN_ID = "6a60f751da38895dfe805e30";
+        const API_KEY = "$2a$10$2gRuysiXM85zMZ4OTG2dU.AEaN0WyPHJveZ2wy62/tqidY73EOJBS";
+        const mesesNomes = {
+            "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril", 
+            "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto", 
+            "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro"
         };
+        const canais = [
+            { id: "1) IFOOD", nome: "1) IFOOD" },
+            { id: "2) APP/SITE", nome: "2) APP/SITE" },
+            { id: "3) MARKETPLACE", nome: "3) MARKETPLACE" },
+            { id: "CONSOLIDADO", nome: "CONSOLIDADO (TOTAL)" },
+            { id: "CONSOLIDADO_LADO_A_LADO", nome: "📊 CONSOLIDADO LADO A LADO" }
+        ];
+        let canalAtivo = "1) IFOOD";
+        let anoAtivo = "2026";
+        let lancamentos = [];
+        let adminAutenticado = false; 
+        let editandoIndex = null;     
 
-        if (editandoIndex !== null) {
-            // Atualiza item existente
-            lancamentos[editandoIndex] = novoItem;
-            editandoIndex = null;
-        } else {
-            // Adiciona novo item
-            lancamentos.push(novoItem);
-        }
-
-        await salvarDadosNaNuvem();
-        
-        // Limpar apenas valores e descrição para facilitar múltiplos lançamentos seguidos
-        document.getElementById('lanc-valor').value = '';
-        document.getElementById('lanc-desc').value = '';
-        
-        document.getElementById('filtro-ano').value = ano;
-        anoAtivo = String(ano);
-        canalAtivo = String(canal);
-        
-        renderizarBotoesCanais();
-        calcularEAtualizarDRE();
-        renderizarLancamentosRecentes();
-    }
-
-    function editarLancamento(index) {
-        const l = lancamentos[index];
-        if (!l) return;
-
-        document.getElementById('lanc-mes').value = l.mes;
-        document.getElementById('lanc-ano').value = l.ano;
-        document.getElementById('lanc-canal').value = l.canal;
-        document.getElementById('lanc-tipo').value = l.tipo;
-        document.getElementById('lanc-valor').value = l.valor;
-        document.getElementById('lanc-desc').value = l.desc;
-        
-        editandoIndex = index;
-        
-        // Altera visualmente o botão para indicar edição
-        const btnSalvar = document.querySelector('button[onclick="adicionarLancamento()"]');
-        btnSalvar.innerText = "Atualizar Lançamento";
-        btnSalvar.className = "px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 shadow-sm";
-    }
-
-    function cancelarEdicao() {
-        editandoIndex = null;
-        document.getElementById('lanc-valor').value = '';
-        document.getElementById('lanc-desc').value = '';
-        const btnSalvar = document.querySelector('button[onclick="adicionarLancamento()"]');
-        if (btnSalvar) {
-            btnSalvar.innerText = "Salvar Lançamento";
-            btnSalvar.className = "px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 shadow-sm";
-        }
-    }
-
-    async function removerLancamento(index) {
-        if (confirm("Deseja realmente excluir este lançamento?")) {
-            lancamentos.splice(index, 1);
-            await salvarDadosNaNuvem();
-            renderizarLancamentosRecentes();
+        async function carregarDadosDaNuvem() {
+            try {
+                let resposta = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+                    headers: { 'X-Master-Key': API_KEY }
+                });
+                if (resposta.ok) {
+                    let resultado = await resposta.json();
+                    if (resultado.record && Array.isArray(resultado.record.lancamentos)) {
+                        lancamentos = resultado.record.lancamentos;
+                    }
+                }
+            } catch (e) {
+                console.error("Erro ao carregar da nuvem, usando dados vazios.", e);
+            }
+            renderizarBotoesCanais();
             calcularEAtualizarDRE();
         }
-    }
 
-    function renderizarLancamentosRecentes() {
-        const container = document.getElementById('lista-lancamentos-recentes');
-        container.innerHTML = '';
-
-        if (lancamentos.length === 0) {
-            container.innerHTML = '<p class="text-slate-400">Nenhum lançamento registrado.</p>';
-            return;
-        }
-
-        // Agrupar lançamentos por Ano e Mês
-        let agrupados = {};
-        lancamentos.forEach((l, idx) => {
-            let chaveAno = l.ano || "2026";
-            let chaveMes = l.mes || "01";
-            if (!agrupados[chaveAno]) agrupados[chaveAno] = {};
-            if (!agrupados[chaveAno][chaveMes]) agrupados[chaveAno][chaveMes] = [];
-            agrupados[chaveAno][chaveMes].push({ ...l, originalIndex: idx });
-        });
-
-        // Renderizar organizadamente por Ano e Mês
-        Object.keys(agrupados).sort().reverse().forEach(ano => {
-            Object.keys(agrupados[ano]).sort().forEach(mes => {
-                let divMes = document.createElement('div');
-                divMes.className = 'mb-3';
-                
-                let tituloMes = document.createElement('div');
-                tituloMes.className = 'font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded text-xs mb-1';
-                tituloMes.innerText = `${mesesNomes[mes]} / ${ano}`;
-                divMes.appendChild(tituloMes);
-
-                agrupados[ano][mes].forEach(l => {
-                    let canalObj = canais.find(c => c.id === l.canal);
-                    let itemDiv = document.createElement('div');
-                    itemDiv.className = 'flex justify-between items-center bg-white p-2 rounded border border-slate-200 mb-1';
-                    itemDiv.innerHTML = `
-                        <span class="truncate pr-2"><strong>${canalObj?.nome || l.canal}</strong> - ${l.tipo} (${l.desc}): ${formatarMoeda(l.valor)}</span>
-                        <div class="flex space-x-2 shrink-0">
-                            <button onclick="editarLancamento(${l.originalIndex})" class="text-blue-500 hover:text-blue-700" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="removerLancamento(${l.originalIndex})" class="text-red-500 hover:text-red-700" title="Excluir"><i class="fa-solid fa-trash"></i></button>
-                        </div>`;
-                    divMes.appendChild(itemDiv);
+        async function salvarDadosNaNuvem() {
+            try {
+                await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': API_KEY
+                    },
+                    body: JSON.stringify({ lancamentos: lancamentos })
                 });
-
-                container.appendChild(divMes);
-            });
-        });
-    }
-
-    function calcularDadosCanalParaAno(nomeCanal, ano) {
-        let mesesAtivos = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
-        let lancsCanalAno = [];
-        if (nomeCanal === "CONSOLIDADO") {
-            lancsCanalAno = lancamentos.filter(l => l.ano === ano);
-        } else {
-            lancsCanalAno = lancamentos.filter(l => l.canal === nomeCanal && l.ano === ano);
+            } catch (e) {
+                console.error("Erro ao salvar na nuvem.", e);
+            }
         }
 
-        let dadosMes = {};
-        mesesAtivos.forEach(mes => {
-            dadosMes[mes] = {
+        function tentarAbrirAdmin() {
+            if (adminAutenticado) {
+                toggleAdminModal();
+                return;
+            }
+            let senha = prompt("Acesso restrito. Digite a senha para realizar o lançamento:");
+            if (senha === "0") {
+                adminAutenticado = true;
+                toggleAdminModal();
+            } else if (senha !== null) {
+                alert("Senha incorreta! Apenas você pode realizar lançamentos.");
+            }
+        }
+
+        function formatarMoeda(valor, isTotalizador = false) {
+            let absVal = Math.abs(valor);
+            let formatado = absVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            let textoFinal = valor < 0 ? `(${formatado})` : formatado;
+            if (isTotalizador) {
+                return `<span class="font-bold">${textoFinal}</span>`;
+            }
+            return `<span class="font-medium">${textoFinal}</span>`;
+        }
+
+        function formatarPercentual(valor, isTotalizador = false) {
+            let formatado = valor.toFixed(2).replace('.', ',') + '%';
+            return isTotalizador ? `<span class="font-bold">${formatado}</span>` : formatado;
+        }
+
+        function renderizarBotoesCanais() {
+            const container = document.getElementById('canais-botoes');
+            container.innerHTML = '';
+            canais.forEach(c => {
+                let btn = document.createElement('button');
+                let isActive = c.id === canalAtivo;
+                btn.className = `px-4 py-2.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center space-x-2 ${isActive ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`;
+                btn.innerHTML = `<span>${c.nome}</span>`;
+                btn.onclick = () => {
+                    canalAtivo = c.id;
+                    renderizarBotoesCanais();
+                    calcularEAtualizarDRE();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function atualizarAnoFiltro() {
+            anoAtivo = document.getElementById('filtro-ano').value;
+            calcularEAtualizarDRE();
+        }
+
+        function toggleAdminModal() {
+            const modal = document.getElementById('admin-modal');
+            modal.classList.toggle('hidden');
+            if (!modal.classList.contains('hidden')) {
+                cancelarEdicao(); 
+                renderizarLancamentosRecentes();
+            }
+        }
+
+        async function adicionarLancamento() {
+            const mes = document.getElementById('lanc-mes').value;
+            const ano = document.getElementById('lanc-ano').value;
+            const canal = document.getElementById('lanc-canal').value;
+            const tipo = document.getElementById('lanc-tipo').value;
+            let valorStr = document.getElementById('lanc-valor').value.trim().replace(',', '.');
+            let valor = parseFloat(valorStr);
+            const desc = document.getElementById('lanc-desc').value || "Lançamento DRE";
+
+            if (isNaN(valor) || valor <= 0) {
+                alert('Por favor, informe um valor numérico válido.');
+                return;
+            }
+
+            const novoItem = {
+                canal: String(canal).trim(),
+                tipo: String(tipo).trim(),
+                valor: Number(valor),
+                desc,
+                mes: String(mes),
+                ano: String(ano)
+            };
+
+            if (editandoIndex !== null) {
+                lancamentos[editandoIndex] = novoItem;
+                editandoIndex = null;
+            } else {
+                lancamentos.push(novoItem);
+            }
+
+            await salvarDadosNaNuvem();
+            
+            document.getElementById('lanc-valor').value = '';
+            document.getElementById('lanc-desc').value = '';
+            
+            document.getElementById('filtro-ano').value = ano;
+            anoAtivo = String(ano);
+            canalAtivo = String(canal);
+            
+            renderizarBotoesCanais();
+            calcularEAtualizarDRE();
+            renderizarLancamentosRecentes();
+        }
+
+        function editarLancamento(index) {
+            const l = lancamentos[index];
+            if (!l) return;
+
+            document.getElementById('lanc-mes').value = l.mes;
+            document.getElementById('lanc-ano').value = l.ano;
+            document.getElementById('lanc-canal').value = l.canal;
+            document.getElementById('lanc-tipo').value = l.tipo;
+            document.getElementById('lanc-valor').value = l.valor;
+            document.getElementById('lanc-desc').value = l.desc;
+            
+            editandoIndex = index;
+            
+            const btnSalvar = document.querySelector('button[onclick="adicionarLancamento()"]');
+            btnSalvar.innerText = "Atualizar Lançamento";
+            btnSalvar.className = "px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 shadow-sm";
+        }
+
+        function cancelarEdicao() {
+            editandoIndex = null;
+            document.getElementById('lanc-valor').value = '';
+            document.getElementById('lanc-desc').value = '';
+            const btnSalvar = document.querySelector('button[onclick="adicionarLancamento()"]');
+            if (btnSalvar) {
+                btnSalvar.innerText = "Salvar Lançamento";
+                btnSalvar.className = "px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 shadow-sm";
+            }
+        }
+
+        async function removerLancamento(index) {
+            if (confirm("Deseja realmente excluir este lançamento?")) {
+                lancamentos.splice(index, 1);
+                await salvarDadosNaNuvem();
+                renderizarLancamentosRecentes();
+                calcularEAtualizarDRE();
+            }
+        }
+
+        function renderizarLancamentosRecentes() {
+            const container = document.getElementById('lista-lancamentos-recentes');
+            container.innerHTML = '';
+
+            if (lancamentos.length === 0) {
+                container.innerHTML = '<p class="text-slate-400">Nenhum lançamento registrado.</p>';
+                return;
+            }
+
+            let agrupados = {};
+            lancamentos.forEach((l, idx) => {
+                let chaveAno = l.ano || "2026";
+                let chaveMes = l.mes || "01";
+                if (!agrupados[chaveAno]) agrupados[chaveAno] = {};
+                if (!agrupados[chaveAno][chaveMes]) agrupados[chaveAno][chaveMes] = [];
+                agrupados[chaveAno][chaveMes].push({ ...l, originalIndex: idx });
+            });
+
+            Object.keys(agrupados).sort().reverse().forEach(ano => {
+                Object.keys(agrupados[ano]).sort().forEach(mes => {
+                    let divMes = document.createElement('div');
+                    divMes.className = 'mb-3';
+                    
+                    let tituloMes = document.createElement('div');
+                    tituloMes.className = 'font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded text-xs mb-1';
+                    tituloMes.innerText = `${mesesNomes[mes]} / ${ano}`;
+                    divMes.appendChild(tituloMes);
+
+                    agrupados[ano][mes].forEach(l => {
+                        let canalObj = canais.find(c => c.id === l.canal);
+                        let itemDiv = document.createElement('div');
+                        itemDiv.className = 'flex justify-between items-center bg-white p-2 rounded border border-slate-200 mb-1';
+                        itemDiv.innerHTML = `
+                            <span class="truncate pr-2"><strong>${canalObj?.nome || l.canal}</strong> - ${l.tipo} (${l.desc}): ${formatarMoeda(l.valor)}</span>
+                            <div class="flex space-x-2 shrink-0">
+                                <button onclick="editarLancamento(${l.originalIndex})" class="text-blue-500 hover:text-blue-700" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="removerLancamento(${l.originalIndex})" class="text-red-500 hover:text-red-700" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                            </div>`;
+                        divMes.appendChild(itemDiv);
+                    });
+
+                    container.appendChild(divMes);
+                });
+            });
+        }
+
+        function calcularDadosCanalParaAno(nomeCanal, ano) {
+            let mesesAtivos = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+            let lancsCanalAno = [];
+            if (nomeCanal === "CONSOLIDADO") {
+                lancsCanalAno = lancamentos.filter(l => l.ano === ano);
+            } else {
+                lancsCanalAno = lancamentos.filter(l => l.canal === nomeCanal && l.ano === ano);
+            }
+
+            let dadosMes = {};
+            mesesAtivos.forEach(mes => {
+                dadosMes[mes] = {
+                    receita_bruta: 0, impostos: 0, receita_liquida: 0,
+                    cmv: 0, lucro_bruto: 0, pessoal: 0, comercial: 0,
+                    fretes: 0, administrativas: 0, tributarias: 0,
+                    outras_despesas: 0, total_desp: 0, ebitda: 0
+                };
+            });
+
+            lancsCanalAno.forEach(l => {
+                let m = l.mes || "01";
+                let t = l.tipo;
+                if (dadosMes[m] && dadosMes[m][t] !== undefined) {
+                    dadosMes[m][t] += Number(l.valor);
+                }
+            });
+
+            Object.keys(dadosMes).forEach(m => {
+                let dm = dadosMes[m];
+                dm.receita_liquida = dm.receita_bruta - dm.impostos;
+                dm.lucro_bruto = dm.receita_liquida - dm.cmv;
+                dm.total_desp = dm.pessoal + dm.comercial + dm.fretes + dm.administrativas + dm.tributarias + dm.outras_despesas;
+                dm.ebitda = dm.lucro_bruto - dm.total_desp;
+            });
+
+            let acumuladoAno = {
                 receita_bruta: 0, impostos: 0, receita_liquida: 0,
                 cmv: 0, lucro_bruto: 0, pessoal: 0, comercial: 0,
                 fretes: 0, administrativas: 0, tributarias: 0,
                 outras_despesas: 0, total_desp: 0, ebitda: 0
             };
-        });
 
-        lancsCanalAno.forEach(l => {
-            let m = l.mes || "01";
-            let t = l.tipo;
-            if (dadosMes[m] && dadosMes[m][t] !== undefined) {
-                dadosMes[m][t] += Number(l.valor);
-            }
-        });
-
-        Object.keys(dadosMes).forEach(m => {
-            let dm = dadosMes[m];
-            dm.receita_liquida = dm.receita_bruta - dm.impostos;
-            dm.lucro_bruto = dm.receita_liquida - dm.cmv;
-            dm.total_desp = dm.pessoal + dm.comercial + dm.fretes + dm.administrativas + dm.tributarias + dm.outras_despesas;
-            dm.ebitda = dm.lucro_bruto - dm.total_desp;
-        });
-
-        let acumuladoAno = {
-            receita_bruta: 0, impostos: 0, receita_liquida: 0,
-            cmv: 0, lucro_bruto: 0, pessoal: 0, comercial: 0,
-            fretes: 0, administrativas: 0, tributarias: 0,
-            outras_despesas: 0, total_desp: 0, ebitda: 0
-        };
-
-        Object.values(dadosMes).forEach(dm => {
-            Object.keys(acumuladoAno).forEach(k => {
-                acumuladoAno[k] += dm[k];
+            Object.values(dadosMes).forEach(dm => {
+                Object.keys(acumuladoAno).forEach(k => {
+                    acumuladoAno[k] += dm[k];
+                });
             });
-        });
 
-        return { dadosMes, acumuladoAno };
-    }
-
-    function calcularEAtualizarDRE() {
-        const objCanalAtivo = canais.find(c => c.id === canalAtivo) || canais[0];
-        document.getElementById('titulo-dre-canal').innerText = `DRE Detalhada - ${objCanalAtivo.nome} (${anoAtivo})`;
-        
-        const badgeContainer = document.getElementById('badge-av-container');
-        if (canalAtivo === "CONSOLIDADO") {
-            badgeContainer.innerText = "Base A.V.: Receita Líquida Consolidada (100%)";
-        } else if (canalAtivo === "CONSOLIDADO_LADO_A_LADO") {
-            badgeContainer.innerText = "Visão Lado a Lado: IFOOD | APP/SITE | MARKETPLACE | CONSOLIDADO (Com A.V. individual)";
-        } else {
-            badgeContainer.innerText = "Base A.V.: Receita Líquida do Canal (100%)";
+            return { dadosMes, acumuladoAno };
         }
 
-        const theadTr = document.getElementById('dre-thead-tr');
-        const tbody = document.getElementById('dre-table-body');
-        tbody.innerHTML = '';
+        function calcularEAtualizarDRE() {
+            const objCanalAtivo = canais.find(c => c.id === canalAtivo) || canais[0];
+            document.getElementById('titulo-dre-canal').innerText = `DRE Detalhada - ${objCanalAtivo.nome} (${anoAtivo})`;
+            
+            const badgeContainer = document.getElementById('badge-av-container');
+            if (canalAtivo === "CONSOLIDADO") {
+                badgeContainer.innerText = "Base A.V.: Receita Líquida Consolidada (100%)";
+            } else if (canalAtivo === "CONSOLIDADO_LADO_A_LADO") {
+                badgeContainer.innerText = "Visão Lado a Lado: IFOOD | APP/SITE | MARKETPLACE | CONSOLIDADO (Com A.V. individual)";
+            } else {
+                badgeContainer.innerText = "Base A.V.: Receita Líquida do Canal (100%)";
+            }
 
-        if (canalAtivo === "CONSOLIDADO_LADO_A_LADO") {
+            const theadTr = document.getElementById('dre-thead-tr');
+            const tbody = document.getElementById('dre-table-body');
+            tbody.innerHTML = '';
+
+            if (canalAtivo === "CONSOLIDADO_LADO_A_LADO") {
+                let theadHtml = '<th class="py-3 px-4 min-w-[240px] coluna-fixa bg-slate-100">Estrutura da DRE</th>';
+                const canaisComparacao = ["1) IFOOD", "2) APP/SITE", "3) MARKETPLACE", "CONSOLIDADO"];
+                const rotulosCurtos = {
+                    "1) IFOOD": "IFOOD",
+                    "2) APP/SITE": "APP/SITE",
+                    "3) MARKETPLACE": "MARKETPLACE",
+                    "CONSOLIDADO": "TOTAL GERAL"
+                };
+
+                canaisComparacao.forEach(idC => {
+                    theadHtml += `<th class="py-3 px-2 text-right border-l border-slate-300 font-bold bg-slate-100">${rotulosCurtos[idC]} (Acum.)</th>`;
+                    theadHtml += `<th class="py-3 px-2 text-right font-bold bg-slate-100">A.V.</th>`;
+                });
+                theadTr.innerHTML = theadHtml;
+
+                let dadosCanais = {};
+                canaisComparacao.forEach(idC => {
+                    dadosCanais[idC] = calcularDadosCanalParaAno(idC, anoAtivo).acumuladoAno;
+                });
+
+                function adicionarLinhaLadoALado(nome, seletorValor, isHeader = false, isSubtotal = false, forcarParenteses = false) {
+                    let tr = document.createElement('tr');
+                    if (isHeader) tr.className = 'bg-slate-100 font-bold text-slate-900';
+                    else if (isSubtotal) tr.className = 'bg-slate-50 font-semibold text-slate-800 border-t border-b border-slate-200';
+                    else tr.className = 'hover:bg-slate-50/80 transition';
+
+                    let html = `<td class="px-4 py-2.5 coluna-fixa">${nome}</td>`;
+                    canaisComparacao.forEach(idC => {
+                        let acumuladoAno = dadosCanais[idC];
+                        let valAcum = seletorValor(acumuladoAno);
+                        let baseAcumAV = acumuladoAno.receita_liquida !== 0 ? acumuladoAno.receita_liquida : 1;
+                        let avAcum = (valAcum / baseAcumAV) * 100;
+                        let valAcumExibicao = forcarParenteses && valAcum > 0 ? -valAcum : valAcum;
+
+                        html += `
+                            <td class="py-2.5 px-2 text-right border-l border-slate-200">${formatarMoeda(valAcumExibicao, isHeader || isSubtotal)}</td>
+                            <td class="py-2.5 px-2 text-right text-slate-500">${formatarPercentual(avAcum, isHeader || isSubtotal)}</td>
+                        `;
+                    });
+                    tr.innerHTML = html;
+                    tbody.appendChild(tr);
+                }
+
+                adicionarLinhaLadoALado("Receita Bruta Total", dm => dm.receita_bruta, true, false);
+                adicionarLinhaLadoALado("(-) Impostos sobre Vendas", dm => dm.impostos, false, false, true);
+                adicionarLinhaLadoALado("(=) Receita Líquida", dm => dm.receita_liquida, false, true);
+                adicionarLinhaLadoALado("(-) Custo das Mercadorias Vendidas (CMV)", dm => dm.cmv, true, false, true);
+                adicionarLinhaLadoALado("(=) Lucro Bruto", dm => dm.lucro_bruto, false, true);
+                adicionarLinhaLadoALado("(-) Despesas Operacionais (SG&A Totais)", dm => dm.total_desp, true, false, true);
+                adicionarLinhaLadoALado("    • Gastos com Pessoal", dm => dm.pessoal, false, false, true);
+                adicionarLinhaLadoALado("    • Despesas Comerciais / Embalagens", dm => dm.comercial, false, false, true);
+                adicionarLinhaLadoALado("    • Fretes / Entrega Cliente", dm => dm.fretes, false, false, true);
+                adicionarLinhaLadoALado("    • Despesas Administrativas", dm => dm.administrativas, false, false, true);
+                adicionarLinhaLadoALado("    • Despesas Tributárias", dm => dm.tributarias, false, false, true);
+                adicionarLinhaLadoALado("    • Outras Despesas Operacionais", dm => dm.outras_despesas, false, false, true);
+                adicionarLinhaLadoALado("(=) EBITDA / Resultado Operacional", dm => dm.ebitda, false, true);
+                return;
+            }
+
+            let resCanal = calcularDadosCanalParaAno(canalAtivo, anoAtivo);
+            let dadosMes = resCanal.dadosMes;
+            let acumuladoAno = resCanal.acumuladoAno;
+            let mesesAtivos = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+
             let theadHtml = '<th class="py-3 px-4 min-w-[240px] coluna-fixa bg-slate-100">Estrutura da DRE</th>';
-            const canaisComparacao = ["1) IFOOD", "2) APP/SITE", "3) MARKETPLACE", "CONSOLIDADO"];
-            const rotulosCurtos = {
-                "1) IFOOD": "IFOOD",
-                "2) APP/SITE": "APP/SITE",
-                "3) MARKETPLACE": "MARKETPLACE",
-                "CONSOLIDADO": "TOTAL GERAL"
-            };
-
-            canaisComparacao.forEach(idC => {
-                theadHtml += `<th class="py-3 px-2 text-right border-l border-slate-300 font-bold bg-slate-100">${rotulosCurtos[idC]} (Acum.)</th>`;
-                theadHtml += `<th class="py-3 px-2 text-right font-bold bg-slate-100">A.V.</th>`;
+            mesesAtivos.forEach(mes => {
+                theadHtml += `<th class="py-3 px-2 text-right">${mesesNomes[mes].substring(0,3)}</th><th class="py-3 px-2 text-right">A.V.</th>`;
             });
+            theadHtml += `<th class="py-3 px-3 text-right bg-slate-200/60">Acumulado (${anoAtivo})</th><th class="py-3 px-3 text-right bg-slate-200/60">A.V. Acum.</th>`;
             theadTr.innerHTML = theadHtml;
 
-            let dadosCanais = {};
-            canaisComparacao.forEach(idC => {
-                dadosCanais[idC] = calcularDadosCanalParaAno(idC, anoAtivo).acumuladoAno;
-            });
-
-            function adicionarLinhaLadoALado(nome, seletorValor, isHeader = false, isSubtotal = false, forcarParenteses = false) {
+            function adicionarLinha(nome, seletorValor, isHeader = false, isSubtotal = false, forcarParenteses = false) {
                 let tr = document.createElement('tr');
                 if (isHeader) tr.className = 'bg-slate-100 font-bold text-slate-900';
                 else if (isSubtotal) tr.className = 'bg-slate-50 font-semibold text-slate-800 border-t border-b border-slate-200';
                 else tr.className = 'hover:bg-slate-50/80 transition';
 
                 let html = `<td class="px-4 py-2.5 coluna-fixa">${nome}</td>`;
-                canaisComparacao.forEach(idC => {
-                    let acumuladoAno = dadosCanais[idC];
-                    let valAcum = seletorValor(acumuladoAno);
-                    let baseAcumAV = acumuladoAno.receita_liquida !== 0 ? acumuladoAno.receita_liquida : 1;
-                    let avAcum = (valAcum / baseAcumAV) * 100;
-                    let valAcumExibicao = forcarParenteses && valAcum > 0 ? -valAcum : valAcum;
+                mesesAtivos.forEach(mes => {
+                    let dm = dadosMes[mes];
+                    let val = seletorValor(dm);
+                    let baseAV = dm.receita_liquida !== 0 ? dm.receita_liquida : 1;
+                    let av = (val / baseAV) * 100;
+                    let valExibicao = forcarParenteses && val > 0 ? -val : val;
 
                     html += `
-                        <td class="py-2.5 px-2 text-right border-l border-slate-200">${formatarMoeda(valAcumExibicao, isHeader || isSubtotal)}</td>
-                        <td class="py-2.5 px-2 text-right text-slate-500">${formatarPercentual(avAcum, isHeader || isSubtotal)}</td>
+                        <td class="py-2.5 px-2 text-right">${formatarMoeda(valExibicao, isHeader || isSubtotal)}</td>
+                        <td class="py-2.5 px-2 text-right text-slate-500">${formatarPercentual(av, isHeader || isSubtotal)}</td>
                     `;
                 });
+
+                let valAcum = seletorValor(acumuladoAno);
+                let baseAcumAV = acumuladoAno.receita_liquida !== 0 ? acumuladoAno.receita_liquida : 1;
+                let avAcum = (valAcum / baseAcumAV) * 100;
+                let valAcumExibicao = forcarParenteses && valAcum > 0 ? -valAcum : valAcum;
+
+                html += `
+                    <td class="py-2.5 px-3 text-right bg-slate-50">${formatarMoeda(valAcumExibicao, true)}</td>
+                    <td class="py-2.5 px-3 text-right text-slate-600 bg-slate-50">${formatarPercentual(avAcum, true)}</td>
+                `;
                 tr.innerHTML = html;
                 tbody.appendChild(tr);
             }
 
-            adicionarLinhaLadoALado("Receita Bruta Total", dm => dm.receita_bruta, true, false);
-            adicionarLinhaLadoALado("(-) Impostos sobre Vendas", dm => dm.impostos, false, false, true);
-            adicionarLinhaLadoALado("(=) Receita Líquida", dm => dm.receita_liquida, false, true);
-            adicionarLinhaLadoALado("(-) Custo das Mercadorias Vendidas (CMV)", dm => dm.cmv, true, false, true);
-            adicionarLinhaLadoALado("(=) Lucro Bruto", dm => dm.lucro_bruto, false, true);
-            adicionarLinhaLadoALado("(-) Despesas Operacionais (SG&A Totais)", dm => dm.total_desp, true, false, true);
-            adicionarLinhaLadoALado("    • Gastos com Pessoal", dm => dm.pessoal, false, false, true);
-            adicionarLinhaLadoALado("    • Despesas Comerciais / Embalagens", dm => dm.comercial, false, false, true);
-            adicionarLinhaLadoALado("    • Fretes / Entrega Cliente", dm => dm.fretes, false, false, true);
-            adicionarLinhaLadoALado("    • Despesas Administrativas", dm => dm.administrativas, false, false, true);
-            adicionarLinhaLadoALado("    • Despesas Tributárias", dm => dm.tributarias, false, false, true);
-            adicionarLinhaLadoALado("    • Outras Despesas Operacionais", dm => dm.outras_despesas, false, false, true);
-            adicionarLinhaLadoALado("(=) EBITDA / Resultado Operacional", dm => dm.ebitda, false, true);
-            return;
+            adicionarLinha("Receita Bruta Total", dm => dm.receita_bruta, true, false);
+            adicionarLinha("(-) Impostos sobre Vendas", dm => dm.impostos, false, false, true);
+            adicionarLinha("(=) Receita Líquida", dm => dm.receita_liquida, false, true);
+            adicionarLinha("(-) Custo das Mercadorias Vendidas (CMV)", dm => dm.cmv, true, false, true);
+            adicionarLinha("(=) Lucro Bruto", dm => dm.lucro_bruto, false, true);
+            adicionarLinha("(-) Despesas Operacionais (SG&A Totais)", dm => dm.total_desp, true, false, true);
+            adicionarLinha("    • Gastos com Pessoal", dm => dm.pessoal, false, false, true);
+            adicionarLinha("    • Despesas Comerciais / Embalagens", dm => dm.comercial, false, false, true);
+            adicionarLinha("    • Fretes / Entrega Cliente", dm => dm.fretes, false, false, true);
+            adicionarLinha("    • Despesas Administrativas", dm => dm.administrativas, false, false, true);
+            adicionarLinha("    • Despesas Tributárias", dm => dm.tributarias, false, false, true);
+            adicionarLinha("    • Outras Despesas Operacionais", dm => dm.outras_despesas, false, false, true);
+            adicionarLinha("(=) EBITDA / Resultado Operacional", dm => dm.ebitda, false, true);
         }
 
-        let resCanal = calcularDadosCanalParaAno(canalAtivo, anoAtivo);
-        let dadosMes = resCanal.dadosMes;
-        let acumuladoAno = resCanal.acumuladoAno;
-        let mesesAtivos = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
-
-        let theadHtml = '<th class="py-3 px-4 min-w-[240px] coluna-fixa bg-slate-100">Estrutura da DRE</th>';
-        mesesAtivos.forEach(mes => {
-            theadHtml += `<th class="py-3 px-2 text-right">${mesesNomes[mes].substring(0,3)}</th><th class="py-3 px-2 text-right">A.V.</th>`;
-        });
-        theadHtml += `<th class="py-3 px-3 text-right bg-slate-200/60">Acumulado (${anoAtivo})</th><th class="py-3 px-3 text-right bg-slate-200/60">A.V. Acum.</th>`;
-        theadTr.innerHTML = theadHtml;
-
-        function adicionarLinha(nome, seletorValor, isHeader = false, isSubtotal = false, forcarParenteses = false) {
-            let tr = document.createElement('tr');
-            if (isHeader) tr.className = 'bg-slate-100 font-bold text-slate-900';
-            else if (isSubtotal) tr.className = 'bg-slate-50 font-semibold text-slate-800 border-t border-b border-slate-200';
-            else tr.className = 'hover:bg-slate-50/80 transition';
-
-            let html = `<td class="px-4 py-2.5 coluna-fixa">${nome}</td>`;
-            mesesAtivos.forEach(mes => {
-                let dm = dadosMes[mes];
-                let val = seletorValor(dm);
-                let baseAV = dm.receita_liquida !== 0 ? dm.receita_liquida : 1;
-                let av = (val / baseAV) * 100;
-                let valExibicao = forcarParenteses && val > 0 ? -val : val;
-
-                html += `
-                    <td class="py-2.5 px-2 text-right">${formatarMoeda(valExibicao, isHeader || isSubtotal)}</td>
-                    <td class="py-2.5 px-2 text-right text-slate-500">${formatarPercentual(av, isHeader || isSubtotal)}</td>
-                `;
-            });
-
-            let valAcum = seletorValor(acumuladoAno);
-            let baseAcumAV = acumuladoAno.receita_liquida !== 0 ? acumuladoAno.receita_liquida : 1;
-            let avAcum = (valAcum / baseAcumAV) * 100;
-            let valAcumExibicao = forcarParenteses && valAcum > 0 ? -valAcum : valAcum;
-
-            html += `
-                <td class="py-2.5 px-3 text-right bg-slate-50">${formatarMoeda(valAcumExibicao, true)}</td>
-                <td class="py-2.5 px-3 text-right text-slate-600 bg-slate-50">${formatarPercentual(avAcum, true)}</td>
-            `;
-            tr.innerHTML = html;
-            tbody.appendChild(tr);
+        function exportarPDF() {
+            window.print();
         }
 
-        adicionarLinha("Receita Bruta Total", dm => dm.receita_bruta, true, false);
-        adicionarLinha("(-) Impostos sobre Vendas", dm => dm.impostos, false, false, true);
-        adicionarLinha("(=) Receita Líquida", dm => dm.receita_liquida, false, true);
-        adicionarLinha("(-) Custo das Mercadorias Vendidas (CMV)", dm => dm.cmv, true, false, true);
-        adicionarLinha("(=) Lucro Bruto", dm => dm.lucro_bruto, false, true);
-        adicionarLinha("(-) Despesas Operacionais (SG&A Totais)", dm => dm.total_desp, true, false, true);
-        adicionarLinha("    • Gastos com Pessoal", dm => dm.pessoal, false, false, true);
-        adicionarLinha("    • Despesas Comerciais / Embalagens", dm => dm.comercial, false, false, true);
-        adicionarLinha("    • Fretes / Entrega Cliente", dm => dm.fretes, false, false, true);
-        adicionarLinha("    • Despesas Administrativas", dm => dm.administrativas, false, false, true);
-        adicionarLinha("    • Despesas Tributárias", dm => dm.tributarias, false, false, true);
-        adicionarLinha("    • Outras Despesas Operacionais", dm => dm.outras_despesas, false, false, true);
-        adicionarLinha("(=) EBITDA / Resultado Operacional", dm => dm.ebitda, false, true);
-    }
-
-    function exportarPDF() {
-        window.print();
-    }
-
-    function exportarExcel() {
-        const tabela = document.getElementById("tabela-dre-dados");
-        let csv = [];
-        for (let i = 0; i < tabela.rows.length; i++) {
-            let row = [], cols = tabela.rows[i].querySelectorAll("th, td");
-            for (let j = 0; j < cols.length; j++) {
-                let texto = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").replace(/;/g, ",");
-                row.push('"' + texto + '"');
+        function exportarExcel() {
+            const tabela = document.getElementById("tabela-dre-dados");
+            let csv = [];
+            for (let i = 0; i < tabela.rows.length; i++) {
+                let row = [], cols = tabela.rows[i].querySelectorAll("th, td");
+                for (let j = 0; j < cols.length; j++) {
+                    let texto = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").replace(/;/g, ",");
+                    row.push('"' + texto + '"');
+                }
+                csv.push(row.join(";"));
             }
-            csv.push(row.join(";"));
+            let csvFile = new Blob(["\uFEFF" + csv.join("\n")], { type: "text/csv;charset=utf-8;" });
+            let downloadLink = document.createElement("a");
+            downloadLink.download = `DRE_${canalAtivo}_${anoAtivo}.csv`;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
         }
-        let csvFile = new Blob(["\uFEFF" + csv.join("\n")], { type: "text/csv;charset=utf-8;" });
-        let downloadLink = document.createElement("a");
-        downloadLink.download = `DRE_${canalAtivo}_${anoAtivo}.csv`;
-        downloadLink.href = window.URL.createObjectURL(csvFile);
-        downloadLink.style.display = "none";
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-    }
 
-    // Inicializar buscando os dados na nuvem
-    carregarDadosDaNuvem();
-</script>
-   
+        carregarDadosDaNuvem();
+    </script>
+</body>
+</html>
