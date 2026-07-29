@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <style>
-        /* Congela a primeira coluna da DRE ao rolar para a direita */
         .coluna-fixa {
             position: sticky;
             left: 0;
@@ -29,7 +28,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-bold tracking-tight">DRE Individualizada por Canal</h1>
-                    <p class="text-xs text-slate-400">Visão Anual, Mês a Mês, Análise Vertical e Acumulado (Nuvem Compartilhada)</p>
+                    <p class="text-xs text-slate-400">Visão Anual, Mês a Mês, Análise Vertical e Acumulado</p>
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-2">
@@ -193,12 +192,12 @@
                 });
                 if (resposta.ok) {
                     let resultado = await resposta.json();
-                    if (resultado.record && Array.isArray(resultado.record.lancamentos)) {
+                    if (resultado.record && Array.isArray(resultado.record.lancamentos) && resultado.record.lancamentos.length > 0) {
                         lancamentos = resultado.record.lancamentos;
                     }
                 }
             } catch (e) {
-                console.error("Erro ao carregar da nuvem, usando dados vazios.", e);
+                console.error("Erro ao carregar da nuvem.", e);
             }
             renderizarBotoesCanais();
             calcularEAtualizarDRE();
@@ -224,7 +223,7 @@
             if (senha === "0") {
                 toggleAdminModal();
             } else if (senha !== null) {
-                alert("Senha incorreta! Apenas você pode realizar lançamentos.");
+                alert("Senha incorreta!");
             }
         }
 
@@ -232,12 +231,7 @@
             let absVal = Math.abs(valor);
             let formatado = absVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             let textoFinal = valor < 0 ? `(${formatado})` : formatado;
-            
-            if (isTotalizador) {
-                return `<span class="font-bold">${textoFinal}</span>`;
-            }
-            
-            return `<span class="font-medium">${textoFinal}</span>`;
+            return isTotalizador ? `<span class="font-bold">${textoFinal}</span>` : `<span class="font-medium">${textoFinal}</span>`;
         }
 
         function formatarPercentual(valor, isTotalizador = false) {
@@ -287,22 +281,14 @@
                 return;
             }
 
-            lancamentos.push({
-                canal: String(canal).trim(),
-                tipo: String(tipo).trim(),
-                valor: Number(valor),
-                desc,
-                mes: String(mes),
-                ano: String(ano)
-            });
-
+            lancamentos.push({ canal, tipo, valor, desc, mes, ano });
             await salvarDadosNaNuvem();
 
             document.getElementById('lanc-valor').value = '';
             document.getElementById('lanc-desc').value = '';
             document.getElementById('filtro-ano').value = ano;
-            anoAtivo = String(ano);
-            canalAtivo = String(canal);
+            anoAtivo = ano;
+            canalAtivo = canal;
             
             renderizarBotoesCanais();
             calcularEAtualizarDRE();
@@ -335,13 +321,7 @@
 
         function calcularDadosCanalParaAno(nomeCanal, ano) {
             let mesesAtivos = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
-            let lancsCanalAno = [];
-
-            if (nomeCanal === "CONSOLIDADO") {
-                lancsCanalAno = lancamentos.filter(l => l.ano === ano);
-            } else {
-                lancsCanalAno = lancamentos.filter(l => l.canal === nomeCanal && l.ano === ano);
-            }
+            let lancsCanalAno = nomeCanal === "CONSOLIDADO" ? lancamentos.filter(l => l.ano === ano) : lancamentos.filter(l => l.canal === nomeCanal && l.ano === ano);
 
             let dadosMes = {};
             mesesAtivos.forEach(mes => {
@@ -393,7 +373,7 @@
             if (canalAtivo === "CONSOLIDADO") {
                 badgeContainer.innerText = "Base A.V.: Receita Líquida Consolidada (100%)";
             } else if (canalAtivo === "CONSOLIDADO_LADO_A_LADO") {
-                badgeContainer.innerText = "Visão Lado a Lado: IFOOD | APP/SITE | MARKETPLACE | CONSOLIDADO (Com A.V. individual)";
+                badgeContainer.innerText = "Visão Lado a Lado: IFOOD | APP/SITE | MARKETPLACE | CONSOLIDADO";
             } else {
                 badgeContainer.innerText = "Base A.V.: Receita Líquida do Canal (100%)";
             }
@@ -405,10 +385,7 @@
             if (canalAtivo === "CONSOLIDADO_LADO_A_LADO") {
                 let theadHtml = '<th class="py-3 px-4 min-w-[240px] coluna-fixa bg-slate-100">Estrutura da DRE</th>';
                 const canaisComparacao = ["1) IFOOD", "2) APP/SITE", "3) MARKETPLACE", "CONSOLIDADO"];
-                const rotulosCurtos = {
-                    "1) IFOOD": "IFOOD", "2) APP/SITE": "APP/SITE", 
-                    "3) MARKETPLACE": "MARKETPLACE", "CONSOLIDADO": "TOTAL GERAL"
-                };
+                const rotulosCurtos = { "1) IFOOD": "IFOOD", "2) APP/SITE": "APP/SITE", "3) MARKETPLACE": "MARKETPLACE", "CONSOLIDADO": "TOTAL GERAL" };
 
                 canaisComparacao.forEach(idC => {
                     theadHtml += `<th class="py-3 px-2 text-right border-l border-slate-300 font-bold bg-slate-100">${rotulosCurtos[idC]} (Acum.)</th>`;
@@ -518,14 +495,11 @@
             adicionarLinha("(=) EBITDA / Resultado Operacional", dm => dm.ebitda, false, true);
         }
 
-        function exportarPDF() {
-            window.print();
-        }
+        function exportarPDF() { window.print(); }
 
         function exportarExcel() {
             const tabela = document.getElementById("tabela-dre-dados");
             let csv = [];
-            
             for (let i = 0; i < tabela.rows.length; i++) {
                 let row = [], cols = tabela.rows[i].querySelectorAll("th, td");
                 for (let j = 0; j < cols.length; j++) {
@@ -534,7 +508,6 @@
                 }
                 csv.push(row.join(";"));
             }
-            
             let csvFile = new Blob(["\uFEFF" + csv.join("\n")], { type: "text/csv;charset=utf-8;" });
             let downloadLink = document.createElement("a");
             downloadLink.download = `DRE_${canalAtivo}_${anoAtivo}.csv`;
@@ -545,8 +518,8 @@
             document.body.removeChild(downloadLink);
         }
 
-        // Inicializar buscando os dados na nuvem
         carregarDadosDaNuvem();
     </script>
 </body>
 </html>
+     
